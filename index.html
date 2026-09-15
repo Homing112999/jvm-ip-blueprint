@@ -1,0 +1,696 @@
+<title>JVM IP 拍攝藍圖</title>
+<meta name="description" content="答 7 條問題，睇下 JVM 點樣幫你嘅品牌拍出 IP 短片。">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+HK:wght@400;500;700;900&family=JetBrains+Mono:wght@500;700&display=swap">
+<style>
+:root{
+  --ground:#EEF0F3; --paper:#FFFFFF; --ink:#141A22; --muted:#5A6472; --line:#D6DBE2;
+  --soft:#F5F6F8; --rec:#E0392C; --tape:#F2C23E; --tape-ink:#2A2206; --on-ink:#FFFFFF;
+  --p1:#141A22; --p2:#E0392C; --p3:#F2C23E; --p4:#8A94A3;
+  --sans:"Noto Sans HK","PingFang HK","Microsoft JhengHei",system-ui,sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --ground:#0E1217; --paper:#161B22; --ink:#ECEFF3; --muted:#98A2AF; --line:#2B323C;
+    --soft:#1C222A; --rec:#FF5B4D; --tape:#E8B936; --tape-ink:#231C04; --on-ink:#0E1217;
+    --p1:#ECEFF3; --p2:#FF5B4D; --p3:#E8B936; --p4:#6D7785;
+  }
+}
+:root[data-theme="dark"]{
+  --ground:#0E1217; --paper:#161B22; --ink:#ECEFF3; --muted:#98A2AF; --line:#2B323C;
+  --soft:#1C222A; --rec:#FF5B4D; --tape:#E8B936; --tape-ink:#231C04; --on-ink:#0E1217;
+  --p1:#ECEFF3; --p2:#FF5B4D; --p3:#E8B936; --p4:#6D7785;
+}
+*{box-sizing:border-box}
+body{background:var(--ground);color:var(--ink);font-family:var(--sans);font-size:16px;line-height:1.65;-webkit-font-smoothing:antialiased}
+button{font:inherit;color:inherit;cursor:pointer}
+:focus-visible{outline:2px solid var(--rec);outline-offset:2px}
+.mono{font-family:var(--mono);letter-spacing:.06em;text-transform:uppercase;font-size:12px}
+
+/* top bar */
+.top{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:14px clamp(16px,4vw,40px);border-bottom:1px solid var(--line);background:var(--paper)}
+.brand .co{background:var(--ink);color:var(--on-ink);padding:1px 8px;border-radius:3px;font-family:var(--mono);letter-spacing:.08em}
+.brand{display:flex;align-items:center;gap:10px;font-weight:900;font-size:17px;letter-spacing:.02em}
+.recdot{width:10px;height:10px;border-radius:50%;background:var(--rec);box-shadow:0 0 0 4px color-mix(in srgb,var(--rec) 20%,transparent);animation:blink 1.4s steps(2,start) infinite}
+@keyframes blink{to{opacity:.25}}
+.steps{display:flex;gap:4px}
+.steps span{padding:4px 10px;border-radius:3px;color:var(--muted)}
+.steps span.on{background:var(--ink);color:var(--on-ink)}
+.steps span.done{color:var(--ink)}
+@media (max-width:620px){.steps span:not(.on){display:none}}
+
+main{max-width:1120px;margin:0 auto;padding:clamp(24px,5vw,56px) clamp(16px,4vw,40px) 80px}
+h1,h2,h3{text-wrap:balance;margin:0}
+.eyebrow{color:var(--muted);margin-bottom:10px;display:block}
+.lede{color:var(--muted);max-width:60ch;margin:12px 0 0}
+
+/* industry */
+.h-xl{font-size:clamp(30px,4.6vw,48px);font-weight:900;line-height:1.15;letter-spacing:.01em}
+.h-xl em{font-style:normal;background:linear-gradient(transparent 62%,var(--tape) 62%);padding:0 .08em}
+.grid-ind{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-top:32px}
+@media (max-width:900px){.grid-ind{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media (max-width:620px){.grid-ind{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.tile{text-align:left;background:var(--paper);border:1px solid var(--line);border-radius:6px;padding:18px 18px 16px;display:flex;flex-direction:column;gap:6px;min-height:118px;transition:border-color .15s,transform .15s}
+.tile:hover{border-color:var(--ink);transform:translateY(-2px)}
+.tile b{font-size:19px;font-weight:900}
+.tile small{color:var(--muted);font-size:13px;line-height:1.5}
+.tile .mono{color:var(--muted);font-size:11px;margin-top:auto}
+
+/* question */
+.qwrap{max-width:760px;margin:0 auto}
+.qhead{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:28px}
+.pill{display:inline-flex;align-items:center;gap:8px;padding:5px 12px;border:1px solid var(--line);border-radius:999px;background:var(--paper);font-size:14px}
+.pill b{font-weight:700}
+.linkbtn{background:none;border:none;color:var(--muted);text-decoration:underline;text-underline-offset:3px;padding:4px}
+.linkbtn:hover{color:var(--ink)}
+.bar{height:4px;background:var(--line);border-radius:2px;overflow:hidden;margin-bottom:28px}
+.bar i{display:block;height:100%;background:var(--rec);transition:width .3s}
+.qtitle{font-size:clamp(26px,3.6vw,38px);font-weight:900;line-height:1.25}
+.qhint{color:var(--muted);margin:8px 0 24px}
+.field{display:flex;flex-direction:column;gap:6px;margin-bottom:16px}
+.field label{font-size:14px;font-weight:700}
+input[type=text],textarea{width:100%;font:inherit;font-size:18px;color:var(--ink);background:var(--paper);border:1px solid var(--line);border-radius:6px;padding:14px 16px}
+textarea{min-height:120px;resize:vertical;line-height:1.6}
+input::placeholder,textarea::placeholder{color:var(--muted);opacity:.75}
+input:focus,textarea:focus{outline:none;border-color:var(--ink)}
+.chips{display:flex;flex-wrap:wrap;gap:10px}
+.chip{border:1px solid var(--line);background:var(--paper);border-radius:999px;padding:10px 18px;font-size:16px;transition:background .12s}
+.chip:hover{border-color:var(--ink)}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--on-ink);border-color:var(--ink)}
+.chip small{opacity:.7;margin-left:6px;font-size:13px}
+.qnav{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-top:36px}
+.btn{border:1px solid var(--ink);background:var(--paper);border-radius:6px;padding:12px 22px;font-weight:700}
+.btn.primary{background:var(--ink);color:var(--on-ink)}
+.btn.rec{background:var(--rec);border-color:var(--rec);color:#fff}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.kbd{color:var(--muted);font-size:13px}
+
+/* loading slate */
+.slate{max-width:560px;margin:40px auto 0;background:var(--paper);border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.stripes{height:44px;background:repeating-linear-gradient(-45deg,var(--ink) 0 22px,var(--paper) 22px 44px);border-bottom:2px solid var(--ink);transform-origin:left bottom}
+.slate.live .stripes{animation:clap 1.6s ease-in-out infinite}
+@keyframes clap{0%,70%,100%{transform:rotate(0)}80%{transform:rotate(-9deg)}}
+.slate-rows{display:grid;grid-template-columns:1fr 1fr}
+.slate-rows div{padding:14px 18px;border-bottom:1px solid var(--line)}
+.slate-rows div:nth-child(odd){border-right:1px solid var(--line)}
+.slate-rows .full{grid-column:1/-1;border-right:none!important}
+.slate-rows .mono{color:var(--muted);display:block;font-size:11px}
+.slate-rows b{font-size:18px;font-weight:900}
+.stage{padding:18px;display:flex;flex-direction:column;gap:6px}
+.stage p{margin:0;color:var(--muted);display:flex;gap:10px;align-items:center}
+.stage p.now{color:var(--ink);font-weight:700}
+.stage p.ok{color:var(--ink)}
+.stage p::before{content:"";width:8px;height:8px;border-radius:50%;border:1.5px solid currentColor;flex:none}
+.stage p.ok::before{background:var(--ink)}
+.stage p.now::before{background:var(--rec);border-color:var(--rec)}
+.slate-foot{display:flex;justify-content:space-between;align-items:center;padding:12px 18px;background:var(--soft);font-variant-numeric:tabular-nums}
+
+/* result */
+.notice{display:flex;gap:12px;align-items:center;flex-wrap:wrap;justify-content:space-between;background:var(--paper);border:1px dashed var(--muted);border-radius:6px;padding:12px 16px;margin-bottom:24px;font-size:14px;color:var(--muted)}
+.result{display:grid;grid-template-columns:330px minmax(0,1fr);gap:28px;align-items:start}
+@media (max-width:900px){.result{grid-template-columns:1fr}}
+.idcard{position:sticky;top:20px;background:var(--paper);border:2px solid var(--ink);border-radius:8px;overflow:hidden}
+@media (max-width:900px){.idcard{position:static}}
+.idcard .stripes{height:30px}
+.idbody{padding:20px}
+.idbody .mono{color:var(--muted);font-size:11px}
+.ipname{font-size:30px;font-weight:900;line-height:1.2;margin:4px 0 10px}
+.tagline{display:inline;background:var(--tape);color:var(--tape-ink);font-weight:700;padding:2px 6px;box-decoration-break:clone;-webkit-box-decoration-break:clone;line-height:1.9}
+.kv{display:grid;grid-template-columns:62px 1fr;gap:8px 12px;margin-top:20px;padding-top:16px;border-top:1px solid var(--line);font-size:14px}
+.kv dt{font-family:var(--mono);font-size:11px;letter-spacing:.06em;color:var(--muted);padding-top:3px}
+.kv dd{margin:0}
+.traits{display:flex;flex-wrap:wrap;gap:6px}
+.traits span{border:1px solid var(--line);border-radius:3px;padding:1px 8px;font-size:13px}
+.idactions{display:flex;flex-direction:column;gap:8px;padding:0 20px 20px}
+.idactions .btn{width:100%}
+
+.sec{background:var(--paper);border:1px solid var(--line);border-radius:8px;padding:clamp(18px,3vw,28px);margin-bottom:18px}
+.sec h3{font-size:22px;font-weight:900;margin-bottom:4px}
+.sec .sub{color:var(--muted);font-size:14px;margin:0 0 18px}
+.positioning{font-size:18px;line-height:1.8;margin:0 0 16px;max-width:62ch}
+.pains{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin:0;padding:0;list-style:none}
+.pains li{background:var(--soft);border-radius:4px;padding:10px 12px;font-size:14px}
+.pains li::before{content:"痛點";font-family:var(--mono);font-size:10px;color:var(--rec);display:block;letter-spacing:.08em}
+
+.ratio{display:flex;height:34px;border-radius:4px;overflow:hidden;margin-bottom:18px}
+.ratio div{display:flex;align-items:center;padding:0 10px;font-family:var(--mono);font-size:12px;font-weight:700;min-width:0;white-space:nowrap;overflow:hidden}
+.pillars{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+.pillar{border:1px solid var(--line);border-radius:6px;padding:14px 16px}
+.pillar header{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.sw{width:12px;height:12px;border-radius:2px;flex:none}
+.pillar header b{font-size:17px}
+.pillar header .mono{margin-left:auto;color:var(--muted)}
+.pillar p{margin:0 0 8px;font-size:14px;color:var(--muted)}
+.pillar ul{margin:0;padding-left:18px;font-size:14px}
+
+.filmgrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-bottom:16px}
+@media (max-width:620px){.filmgrid{grid-template-columns:1fr}}
+.filmgrid div{background:var(--soft);border-radius:4px;padding:12px 14px}
+.filmgrid .mono{color:var(--muted);font-size:11px;display:block}
+.filmgrid b{font-size:15px}
+.twocol{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+@media (max-width:620px){.twocol{grid-template-columns:1fr}}
+.twocol h4{margin:0 0 6px;font-size:15px}
+.twocol ul{margin:0;padding-left:18px;font-size:14px}
+
+.script{border:1px solid var(--line);border-radius:6px;margin-bottom:14px;overflow:hidden}
+.script-head{padding:14px 16px;background:var(--soft);display:flex;flex-direction:column;gap:4px}
+.script-head .mono{color:var(--muted);font-size:11px}
+.script-head b{font-size:18px;font-weight:900}
+.hook{font-size:15px}
+.hook span{font-family:var(--mono);font-size:11px;background:var(--rec);color:#fff;padding:1px 6px;border-radius:2px;margin-right:8px;vertical-align:1px}
+.tablewrap{overflow-x:auto}
+table{border-collapse:collapse;width:100%;min-width:520px;font-size:14px}
+th{font-family:var(--mono);font-size:11px;letter-spacing:.06em;color:var(--muted);text-align:left;font-weight:500;padding:8px 16px;border-bottom:1px solid var(--line)}
+td{padding:10px 16px;border-bottom:1px solid var(--line);vertical-align:top}
+td.tc{font-family:var(--mono);font-size:12px;white-space:nowrap;font-variant-numeric:tabular-nums;color:var(--rec);font-weight:700}
+tr:last-child td{border-bottom:none}
+.cta-line{padding:10px 16px;border-top:1px solid var(--line);font-size:14px}
+.cta-line b{margin-right:6px}
+
+.funnel{list-style:none;margin:0;padding:0;counter-reset:f}
+.funnel li{display:grid;grid-template-columns:44px 1fr;gap:14px;position:relative;padding-bottom:18px;counter-increment:f}
+.funnel li:not(:last-child)::after{content:"";position:absolute;left:21px;top:40px;bottom:2px;width:2px;background:var(--line)}
+.funnel .n{width:44px;height:44px;border-radius:50%;border:2px solid var(--ink);display:grid;place-items:center;font-family:var(--mono);font-weight:700;font-size:14px;background:var(--paper)}
+.funnel li:last-child .n{background:var(--ink);color:var(--on-ink)}
+.funnel b{display:block;font-size:17px;padding-top:8px}
+.funnel p{margin:2px 0 0;font-size:14px;color:var(--muted)}
+.magnet{margin-top:6px;display:flex;gap:14px;align-items:flex-start;background:var(--tape);color:var(--tape-ink);border-radius:6px;padding:14px 16px}
+.magnet .mono{font-size:11px;opacity:.75;display:block}
+.magnet b{font-size:17px}
+.magnet p{margin:2px 0 0;font-size:14px}
+
+.week{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.day{border:1px solid var(--line);border-radius:6px;padding:12px 14px}
+.day .mono{font-size:11px;color:var(--muted)}
+.day b{display:block;font-size:15px;margin:2px 0}
+.day p{margin:0;font-size:13px;color:var(--muted)}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;margin-top:16px}
+.kpis div{border-top:2px solid var(--ink);padding-top:8px}
+.kpis .mono{font-size:11px;color:var(--muted);display:block}
+.kpis b{font-size:20px;font-weight:900;font-variant-numeric:tabular-nums}
+
+.endcard{background:var(--ink);color:var(--on-ink);border-radius:8px;padding:clamp(20px,4vw,36px);display:flex;justify-content:space-between;align-items:center;gap:20px;flex-wrap:wrap}
+.endcard h3{font-size:24px;font-weight:900}
+.endcard p{margin:4px 0 0;opacity:.75;max-width:52ch}
+.endcard .btn{background:var(--rec);border-color:var(--rec);color:#fff;text-decoration:none}
+.endcard .btn.ghost{background:transparent;border-color:currentColor;color:var(--on-ink)}
+.endbtns{display:flex;gap:10px;flex-wrap:wrap}
+.side{border:1px solid var(--line);border-radius:6px;padding:14px 16px}
+.side.jvm{border:2px solid var(--ink)}
+.shootday{margin:14px 0 0;display:flex;gap:12px;align-items:baseline;flex-wrap:wrap;font-size:15px}
+.shootday .mono{background:var(--tape);color:var(--tape-ink);padding:2px 8px;border-radius:3px;font-size:11px}
+
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--ink);color:var(--on-ink);padding:10px 18px;border-radius:6px;font-size:14px;z-index:9}
+.fade{animation:fade .35s ease both}
+@keyframes fade{from{opacity:.001;transform:translateY(6px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+
+<header class="top">
+  <div class="brand"><span class="recdot" aria-hidden="true"></span><span class="co">JVM</span>IP 拍攝藍圖</div>
+  <nav class="steps mono" id="steps" aria-label="進度">
+    <span data-s="0">01 揀行業</span><span data-s="1">02 答問題</span><span data-s="2">03 IP 方案</span>
+  </nav>
+</header>
+<main id="app"></main>
+<div class="toast" id="toast" hidden></div>
+
+<script>
+/* ---------- JVM 公司設定（改呢度就得） ---------- */
+const JVM = {
+  name: "JVM",
+  whatsapp: "",          // 例如 "85291234567"（國家碼 + 號碼，唔使 + 號）；留空就唔顯示 WhatsApp 掣
+  email: "",             // 例如 "hello@jvm.hk"；留空就唔顯示
+  process: [
+    ["免費策略諮詢","30 分鐘傾清楚你盤生意、目標客同預算。"],
+    ["IP 定位工作坊","JVM 同你一齊確認人設、口號同內容方向。"],
+    ["腳本及拍攝企劃","JVM 編劇寫好每條片嘅分鏡腳本，你睇過確認。"],
+    ["每月拍攝日","JVM 團隊帶齊器材上門，半日一次過拍晒成個月。"],
+    ["剪接及發佈","JVM 剪片、加字幕配樂，按排程幫你發佈。"],
+    ["每月數據檢討","JVM 睇數據調整方向，下個月拍得更準。"]
+  ]
+};
+
+/* ---------- 行業資料（亦係冇 AI 時嘅範本） ---------- */
+const INDUSTRIES = [
+ {id:"food",name:"餐飲",hint:"主廚／老闆人設 · 出餐實拍",role:"主理人",kw:"菜單",tagline:"真材實料，睇得到先食得安心",
+  demo:{brand:"阿強拉麵",desc:"深水埗十幾個位嘅日式拉麵小店",usp:"湯底每日熬足12個鐘，老闆親自煮"},
+  pains:["唔知食咩好，怕踩雷","覺得貴，唔知值唔值","想搵有人情味嘅小店"],
+  pillars:[["幕後廚房",35,"備料、熬湯、開舖前嘅真實過程，建立「真材實料」印象",["凌晨5點開始熬湯底","一日切幾多斤洋蔥？"]],["招牌菜拆解",30,"一條片講透一道菜：點整、點食最正",["第一次嚟必叫嘅3樣嘢","呢碗麵點解賣呢個價"]],["客人反應",20,"熟客故事、食客即場反應",["食咗我哋10年嘅熟客","第一啖嘅表情"]],["老闆日常",15,"開舖辛酸、行業真心話",["開餐廳最蝕本嘅一件事","收舖後我會食咩"]]],
+  scripts:[{title:"呢碗嘢點解賣呢個價？",hook:"好多人話我哋貴，今日拆俾你睇成本。",shots:[["0–3s","老闆拎住碗對鏡頭","「話我貴？今日同你計數。」"],["3–12s","食材特寫、落鑊、湯底滾","逐樣講用料同份量"],["12–25s","字幕逐項列成本","「租金、人工、食材，計埋淨返……」"],["25–30s","成品靚鏡 + 老闆微笑","「你話，值唔值？」"]]},
+   {title:"開舖前嘅 3 個鐘",hook:"你食嘅第一啖，其實由朝早6點開始。",shots:[["0–3s","時鐘 06:00 + 開燈","「朝早6點，舖頭已經開工。」"],["3–15s","快剪：備料、熬湯、試味","旁白講每個步驟嘅堅持"],["15–25s","開門、第一位客人入座","「11點半，第一位客人。」"],["25–30s","出餐特寫","「我哋等緊你。」"]]}],
+  magnet:["熟客隱藏菜單","留言「菜單」即 DM 送隱藏菜單 + 首次到店小食券"]},
+ {id:"beauty",name:"美容・美甲",hint:"美容師人設 · 前後對比",role:"首席美容師",kw:"檢測",tagline:"唔靠濾鏡，靠實力",
+  demo:{brand:"Glow Room",desc:"銅鑼灣樓上美容院，主打暗瘡同敏感肌護理",usp:"每位客人都由同一位美容師跟足全程"},
+  pains:["試過好多產品都冇效","怕被 hard sell","唔知自己係咩膚質"],
+  pillars:[["前後對比",30,"真實客人療程前後，最直接建立信任",["暗瘡肌 4 星期紀錄","做完第7日會點"]],["護膚迷思破解",30,"用專業拆解網上流傳嘅錯誤做法",["3個你每日都做錯嘅步驟","貴精華真係有用？"]],["療程實錄",25,"由入門到做完，消除陌生恐懼",["第一次嚟會經歷咩","60分鐘療程全記錄"]],["美容師日常",15,"人設溫度：點解入行、客人故事",["我點解做美容師","最難忘嘅一位客人"]]],
+  scripts:[{title:"3 個你每日都做錯嘅護膚步驟",hook:"你越用力護膚，皮膚可能越差。",shots:[["0–3s","美容師對鏡頭搖頭","「停手！呢個步驟你做錯咗。」"],["3–10s","示範錯誤做法（打交叉）","錯誤 1：洗面用熱水"],["10–22s","逐個示範正確做法","錯誤 2、3 + 正確方法"],["22–30s","美容師總結","「想知自己膚質？留言『檢測』。」"]]},
+   {title:"做完療程，第 7 日會點？",hook:"唔好淨係睇即時效果，第7日先係真相。",shots:[["0–3s","Day 1 vs Day 7 分割畫面","「第7日先係真相。」"],["3–15s","Day 1、3、5 快剪","每日變化 + 注意事項字幕"],["15–25s","Day 7 近鏡","客人親口講感受"],["25–30s","美容師","「你嘅皮膚都可以。」"]]}],
+  magnet:["免費肌膚檢測 + 個人護膚清單","留言「檢測」即 DM 預約 15 分鐘免費肌膚檢測"]},
+ {id:"fitness",name:"健身・私人教練",hint:"教練人設 · 動作教學",role:"教練",kw:"訓練表",tagline:"練得啱，先練得耐",
+  demo:{brand:"Coach Ken",desc:"觀塘私人健身室，主打上班族減脂",usp:"每星期3次、每次45分鐘，專為冇時間嘅人設計"},
+  pains:["冇時間做 gym","減極都減唔到","怕練錯受傷"],
+  pillars:[["動作教學",35,"一條片教一個動作，實用即學",["深蹲膝頭痛？睇下呢度","10分鐘辦公室伸展"]],["學員轉變",25,"真實學員進度，最強說服力",["學員3個月前後","佢改咗一個習慣"]],["健身迷思",25,"破解網上錯誤資訊",["做 sit-up 減唔到肚腩","食夜晚一定肥？"]],["教練生活",15,"人設：教練自己點食點練",["教練一日食咩","我曾經都係肥仔"]]],
+  scripts:[{title:"減唔到肚腩？你可能做錯呢個動作",hook:"每日做100下 sit-up，肚腩都唔會走。",shots:[["0–3s","教練停低做 sit-up 嘅人","「停！咁做減唔到肚腩。」"],["3–12s","慢鏡示範錯誤動作","講解原因"],["12–25s","示範 2 個正確替代動作","字幕：組數、次數"],["25–30s","教練對鏡頭","「想要完整訓練表？留言『訓練表』。」"]]},
+   {title:"學員 3 個月前後",hook:"佢每星期只係練3次。",shots:[["0–3s","前後相分割","「3個月，每星期3次。」"],["3–15s","訓練片段快剪","學員講最辛苦嘅時刻"],["15–25s","學員訪問","「最大改變唔係身形……」"],["25–30s","教練 + 學員擊掌","「下一個係你。」"]]}],
+  magnet:["7 日在家訓練表","留言「訓練表」即 DM 送 PDF + 免費體驗堂"]},
+ {id:"property",name:"地產代理",hint:"區域專家人設 · 睇樓實拍",role:"樓市通",kw:"計數表",tagline:"買樓唔靠估，靠數據",
+  demo:{brand:"Ivy 睇樓日記",desc:"將軍澳地產代理，專做上車盤",usp:"住咗將軍澳20年，每條屋苑都熟"},
+  pains:["唔知預算買到咩","怕買貴、怕中伏","唔信經紀講嘢"],
+  pillars:[["睇樓實拍",35,"真實單位導賞，講優點都講缺點",["$500萬喺呢區買到咩","同價位兩個單位對比"]],["樓市數字拆解",25,"成交價、按揭、供款用人話講",["月入$4萬買得起幾錢樓","今個月成交有咩啟示"]],["買樓避坑",25,"專業提醒，建立可信度",["睇樓一定要 check 嘅5樣嘢","呢種單位唔好買"]],["區內生活",15,"區內食買玩，吸引準買家",["住將軍澳嘅真實一日","呢區隱世小店"]]],
+  scripts:[{title:"$500 萬喺呢區買到咩？",hook:"$500萬，係咪真係只可以買劏房？",shots:[["0–3s","經紀喺屋苑門口","「$500萬，我帶你睇。」"],["3–18s","入屋一鏡到底導賞","字幕：實用面積、樓齡、座向"],["18–26s","講1個優點 + 1個缺點","「呢個缺點我一定要講。」"],["26–30s","窗外景","「想要計數表？留言『計數表』。」"]]},
+   {title:"睇樓一定要 check 嘅 5 樣嘢",hook:"呢5樣嘢，經紀未必主動講你知。",shots:[["0–3s","經紀敲牆","「呢度，你要敲一敲。」"],["3–20s","逐樣示範：牆身、水壓、窗框、電箱、門口","每樣配字幕"],["20–27s","經紀總結","「第5樣最多人漏。」"],["27–30s","CTA","「收藏住，睇樓用得著。」"]]}],
+  magnet:["首置買家計數表 + 區內成交紀錄","留言「計數表」即 DM 送 Excel 計數表"]},
+ {id:"finance",name:"保險・理財顧問",hint:"講人話顧問 · 知識拆解",role:"理財顧問",kw:"檢查",tagline:"將複雜條款，講成人話",
+  demo:{brand:"Jason 講保險",desc:"獨立理財顧問，主要服務初出社會嘅年輕人",usp:"用生活例子解釋條款，唔 hard sell"},
+  pains:["睇唔明條款","怕被推銷","唔知自己保障夠唔夠"],
+  pillars:[["知識拆解",35,"一條片講清一個概念",["危疾同醫療有咩分別","自願醫保值唔值得買"]],["真實個案（匿名）",25,"講個案令觀眾代入",["佢買咗保險都賠唔到","一場病令佢清醒"]],["常見誤解",25,"破解迷思，建立專業形象",["年輕唔使買保險？","保費越貴越好？"]],["生活化理財",15,"人設親和力",["月入$2萬點分配","我自己買咗咩保險"]]],
+  scripts:[{title:"買咗保險都賠唔到？3 個常見原因",hook:"交咗10年保費，最後一蚊都賠唔到。",shots:[["0–3s","顧問拎住保單","「交咗10年，一蚊都賠唔到。」"],["3–20s","白板逐點講3個原因","原因 1、2、3 配字幕"],["20–27s","顧問提醒","「第2個原因最多人中。」"],["27–30s","CTA","「留言『檢查』，幫你睇下份保單。」"]]},
+   {title:"月入 $2 萬，點分配先唔會月光？",hook:"唔係你賺得少，係你分配錯。",shots:[["0–3s","顧問數銀紙","「$2萬，我幫你分。」"],["3–18s","圖表動畫逐項分配","字幕：比例 + 金額"],["18–26s","講1個常見錯誤","「最多人漏咗呢一項。」"],["26–30s","CTA","「收藏，出糧照做。」"]]}],
+  magnet:["免費保單健康檢查","留言「檢查」即 DM 預約 20 分鐘保單檢查"],
+  extraTip:"留意保險業監管要求：唔好用「保證回報」、「一定賠」等字眼，個案要匿名。"},
+ {id:"edu",name:"教育・補習",hint:"名師人設 · 3 分鐘解難題",role:"老師",kw:"試堂",tagline:"唔係讀得多，係讀得啱",
+  demo:{brand:"Miss Chan 英文",desc:"旺角補習中心，專教 DSE 英文",usp:"學生平均升2級，Paper 2 作文獨門框架"},
+  pains:["溫極都唔合格","唔知從何入手","家長唔知揀邊間"],
+  pillars:[["3 分鐘解難題",35,"一條片解決一個考試痛點",["DSE 英文最易失分嘅3個位","一招搞掂 Paper 2 開頭"]],["學習方法",25,"方法論，家長學生都啱睇",["溫書時間表點排","背生字最快方法"]],["學生進步故事",20,"真實進步，最強信任",["由不合格到5*","佢改咗一樣嘢"]],["家長關注",20,"直接對付款人講嘢",["幾時開始補習最啱","點揀補習社"]]],
+  scripts:[{title:"DSE 英文最易失分嘅 3 個位",hook:"呢3個位，每年都有一半考生中伏。",shots:[["0–3s","老師喺白板前","「一半考生都錯呢度。」"],["3–20s","白板逐點講解 + 例句","錯誤 vs 正確字幕"],["20–27s","老師總結","「第3個連好學生都錯。」"],["27–30s","CTA","「留言『試堂』，免費試一堂。」"]]},
+   {title:"由不合格到 5*，佢改咗一樣嘢",hook:"佢冇多讀一個鐘，只係改咗一樣嘢。",shots:[["0–3s","成績單前後對比","「不合格到5*。」"],["3–15s","學生訪問","講以前點溫書"],["15–25s","老師講方法","「佢改咗呢一樣。」"],["25–30s","師生合照","「下一個係你。」"]]}],
+  magnet:["免費試堂 + 溫習時間表","留言「試堂」即 DM 送時間表 + 預約試堂"]},
+ {id:"retail",name:"零售・網店",hint:"選物人人設 · 開箱實測",role:"選物人",kw:"優惠",tagline:"每一件，都係我哋試過先賣",
+  demo:{brand:"小日子雜貨",desc:"IG 網店，賣日本生活雜貨",usp:"每件貨老闆親自去日本揀，用過先賣"},
+  pains:["網購怕貨不對辦","唔知邊款啱自己","怕送貨慢"],
+  pillars:[["開箱／實測",35,"真實使用，消除網購疑慮",["$100雜貨實測一星期","新貨開箱"]],["產品對比",25,"幫客人揀，減少猶豫",["$200 vs $2000 差喺邊","3款保溫杯邊隻最好"]],["出貨幕後",20,"包裝、揀貨，展示用心",["今日寄出第100張單","我哋點包裝易碎品"]],["客人回饋",20,"真實評價、UGC 轉載",["客人寄返嚟嘅相","最多人回購嘅一件"]]],
+  scripts:[{title:"$200 vs $2000，差喺邊？",hook:"貴10倍，係咪真係好10倍？",shots:[["0–3s","兩件貨並排","「貴10倍，好10倍？」"],["3–18s","逐項測試：質感、功能、細節","字幕評分"],["18–26s","老闆結論","「如果你係……揀呢件。」"],["26–30s","CTA","「留言『優惠』送你折扣碼。」"]]},
+   {title:"今日寄出第 100 張單",hook:"開舖第3個月，終於寄出第100張單。",shots:[["0–3s","包裹堆","「第100張單。」"],["3–15s","包裝過程快剪","手寫卡特寫"],["15–25s","老闆講創業初心","「多謝每一位。」"],["25–30s","貼單寄出","「下一張，係你嘅？」"]]}],
+  magnet:["首單優惠碼 + 會員群組","留言「優惠」即 DM 送首單折扣碼 + WhatsApp 會員群"]},
+ {id:"health",name:"診所・中醫・物理治療",hint:"醫師人設 · 症狀科普",role:"治療師",kw:"評估",tagline:"痛唔係正常，係身體訊號",
+  demo:{brand:"康和物理治療",desc:"荃灣物理治療中心，主力處理肩頸腰痛",usp:"首次評估60分鐘，度身設計家居運動"},
+  pains:["長期痛唔知原因","怕治療要好耐","唔知睇西醫定物理治療"],
+  pillars:[["症狀科普",35,"講清成因，觀眾對號入座",["成日頸痛？可能係坐姿","手指麻係咩訊號"]],["自救小動作",30,"即學即用，高收藏率",["3個伸展舒緩肩頸","瞓醒腰痛點算"]],["診症幕後",20,"消除陌生感",["第一次嚟會做咩","治療儀器點運作"]],["病人問答",15,"回答留言問題",["幾耐先會好？","要唔要做手術？"]]],
+  scripts:[{title:"成日頸痛？可能係呢個坐姿",hook:"你而家睇緊呢條片嘅姿勢，可能就係頸痛原因。",shots:[["0–3s","治療師模仿低頭睇手機","「你而家係咪咁坐？」"],["3–15s","骨骼圖 + 示範","講頸椎受力"],["15–25s","示範正確姿勢 + 1個伸展","字幕：秒數、次數"],["25–30s","CTA","「痛咗超過2星期？留言『評估』。」"]]},
+   {title:"3 個伸展，舒緩肩頸",hook:"辦公室坐住都做到，每個30秒。",shots:[["0–3s","治療師坐喺辦公椅","「坐住做，30秒。」"],["3–24s","3個動作逐個示範","計時字幕"],["24–30s","提醒 + CTA","「收藏，每日做一次。」"]]}],
+  magnet:["免費痛症評估問卷","留言「評估」即 DM 送評估問卷 + 首次評估優惠"],
+  extraTip:"留意醫療廣告規範：唔好聲稱「根治」、「100% 有效」，病人個案要取得同意。"},
+ {id:"reno",name:"裝修・室內設計",hint:"設計師人設 · 前後改造",role:"設計師",kw:"預算",tagline:"細單位，都可以住得好",
+  demo:{brand:"方寸設計",desc:"專做香港細單位嘅室內設計公司",usp:"400呎以下單位收納設計，全屋訂造傢俬"},
+  pains:["單位細唔夠位擺","怕裝修超支","怕判頭走數"],
+  pillars:[["前後改造",35,"最吸睛、最易爆嘅內容",["400呎點變出三房","舊樓翻新前後"]],["工地實錄",25,"展示工藝同監工，建立信任",["拆牆第一日","防水工程點做先唔漏"]],["裝修避坑",25,"專業提醒",["報價單最易中伏嘅地方","5個裝修後悔位"]],["收納靈感",15,"高收藏、易分享",["廚房收納3招","床底都可以咁用"]]],
+  scripts:[{title:"400 呎點變出三房？",hook:"400呎，一家四口，住得落？",shots:[["0–3s","空單位全景","「400呎，一家四口。」"],["3–10s","平面圖動畫","講間隔構思"],["10–25s","完工導賞一鏡到底","字幕標示收納位"],["25–30s","設計師 + 業主","「想計預算？留言『預算』。」"]]},
+   {title:"裝修報價單最易中伏嘅地方",hook:"報價平咗三成？小心呢3行字。",shots:[["0–3s","設計師拎住報價單","「平三成？睇清楚。」"],["3–20s","圈出3個陷阱位","逐項解釋"],["20–27s","正確報價應該點寫","對比字幕"],["27–30s","CTA","「收藏，簽約前對一對。」"]]}],
+  magnet:["免費度尺 + 裝修預算表","留言「預算」即 DM 送預算表 + 預約免費度尺"]},
+ {id:"wedding",name:"攝影・婚禮",hint:"攝影師人設 · 作品花絮",role:"攝影師",kw:"清單",tagline:"一世人一次，值得拍好",
+  demo:{brand:"Light & Vow",desc:"婚禮攝影團隊，主打自然紀實風格",usp:"全程唔擺 pose，捕捉真實情緒"},
+  pains:["怕相片好 cheesy","唔知幾錢先合理","怕當日好混亂"],
+  pillars:[["作品花絮",35,"成品 + 幕後，展示實力",["一張婚照點樣拍出嚟","雨天都拍到靚相"]],["新人故事",25,"情感內容，高分享",["佢哋拍拖10年","婚禮最感動一刻"]],["籌備貼士",25,"準新人剛需",["籌備婚禮最後悔5件事","婚禮流程時間表"]],["拍攝技巧",15,"專業形象",["自然笑容點引出嚟","手機都拍到嘅構圖"]]],
+  scripts:[{title:"幕後：一張婚照點樣拍出嚟",hook:"呢張相，我哋等咗40分鐘。",shots:[["0–3s","成品相","「呢張相，等咗40分鐘。」"],["3–18s","幕後片段：等光、引導新人","旁白講構思"],["18–26s","按快門一刻 → 成品","對比"],["26–30s","CTA","「留言『清單』送籌備時間表。」"]]},
+   {title:"籌備婚禮最後悔嘅 5 件事",hook:"問咗100對新人，佢哋最後悔呢5件事。",shots:[["0–3s","攝影師對鏡頭","「100對新人話你知。」"],["3–22s","5點逐個講 + 婚禮畫面","字幕編號"],["22–30s","CTA","「收藏，分享俾另一半。」"]]}],
+  magnet:["婚禮籌備時間表","留言「清單」即 DM 送時間表 + 檔期查詢"]},
+ {id:"pet",name:"寵物",hint:"毛孩管家人設 · 日常萌片",role:"毛孩管家",kw:"清單",tagline:"當佢係家人咁照顧",
+  demo:{brand:"毛毛美容室",desc:"西環寵物美容店，主打貓狗美容",usp:"一對一美容，唔用鎮靜劑，全程透明玻璃房"},
+  pains:["怕美容師粗魯","毛孩怕沖涼","唔知點護理"],
+  pillars:[["毛孩日常",35,"萌片吸流量",["今日嚟咗隻好驚嘅貓","沖涼前 vs 沖涼後"]],["護理知識",30,"專業內容，建立信任",["狗狗成日舔腳點解","幾耐剪一次指甲"]],["美容前後",20,"直觀展示技術",["打結毛變蓬鬆","柴犬剪毛前後"]],["主人故事",15,"情感連結",["佢陪咗主人15年","領養嘅故事"]]],
+  scripts:[{title:"狗狗成日舔腳？可能係呢個原因",hook:"唔好以為佢只係扮可愛。",shots:[["0–3s","狗狗舔腳特寫","「唔係扮可愛。」"],["3–18s","管家檢查腳掌講3個原因","字幕"],["18–26s","示範清潔方法","步驟字幕"],["26–30s","CTA","「留言『清單』送護理清單。」"]]},
+   {title:"沖涼前 vs 沖涼後",hook:"入嚟嗰陣，佢係一舊地拖。",shots:[["0–3s","打結毛狗狗","「一舊地拖。」"],["3–20s","美容過程快剪","溫柔手法特寫"],["20–27s","蓬鬆出場慢鏡","音樂轉高"],["27–30s","主人接返","「下個月見！」"]]}],
+  magnet:["毛孩護理清單","留言「清單」即 DM 送清單 + 首次美容優惠"]},
+ {id:"other",name:"其他行業",hint:"自填行業 · 通用 IP 框架",role:"主理人",kw:"資料",tagline:"做得專業，更要講得出嚟",
+  demo:{brand:"",desc:"",usp:""},
+  pains:["唔知你同人有咩分別","怕服務唔值錢","唔信廣告"],
+  pillars:[["專業知識",35,"一條片解答客人一個問題",["客人最常問嘅3條問題","行內人先知嘅事"]],["幕後過程",25,"展示工序同用心",["一單生意由頭到尾","我哋點樣做品質控制"]],["客人故事",25,"真實案例",["佢點解揀我哋","最難忘嘅一個客"]],["創辦人日常",15,"人設溫度",["我點解開始呢盤生意","創業最難嘅一日"]]],
+  scripts:[{title:"客人最常問嘅 3 條問題",hook:"呢3條問題，我每日都被問10次。",shots:[["0–3s","主理人對鏡頭","「每日被問10次。」"],["3–20s","逐條回答 + 畫面","字幕編號"],["20–27s","補充1個貼士","「第3條最多人誤會。」"],["27–30s","CTA","「仲有問題？留言問我。」"]]},
+   {title:"一單生意由頭到尾",hook:"你睇到嘅只係結果，今日俾你睇過程。",shots:[["0–3s","成品","「今日睇過程。」"],["3–20s","工序快剪","每步旁白"],["20–27s","交付客人","客人反應"],["27–30s","CTA","「想要同款？WhatsApp 我哋。」"]]}],
+  magnet:["免費諮詢 + 行業懶人包","留言「資料」即 DM 送懶人包"]}
+];
+
+/* ---------- 問題 ---------- */
+const QUESTIONS = [
+ {key:"brand",title:"介紹下你盤生意",hint:"名稱同一句簡介就夠，AI 會用嚟起人設名。",type:"text"},
+ {key:"audience",title:"你嘅目標客係邊啲人？",hint:"可以揀多過一個，或者自己補充。",type:"multi",custom:true,
+  options:["學生","初出社會年輕人","上班族","家長","中小企老闆","情侶／新人","退休人士","遊客"]},
+ {key:"usp",title:"客人揀你而唔揀人，最大原因係咩？",hint:"講得越具體越好：數字、年資、獨門做法。",type:"textarea"},
+ {key:"face",title:"拍攝日邊個出鏡？",hint:"JVM 會按出鏡人設計人設同拍攝風格。",type:"single",
+  options:["老闆本人","員工／團隊","唔露面，拍產品同過程","未諗好"]},
+ {key:"platforms",title:"主力喺邊啲平台出片？",hint:"可以揀多過一個。",type:"multi",
+  options:["Instagram Reels","小紅書","Facebook","YouTube Shorts","TikTok／抖音","Threads"]},
+ {key:"cta",title:"睇完片，你最想客人做咩？",hint:"決定引流留客路徑嘅終點。",type:"single",
+  options:["WhatsApp 查詢","預約到店","網店落單","留低聯絡資料","Follow 專頁"]},
+ {key:"freq",title:"每個月想出幾多條片？",hint:"JVM 會喺每月拍攝日一次過拍晒，分週發佈。",type:"single",
+  options:["4 條（入門）","8 條（標準）","12 條或以上（進取）"]}
+];
+
+/* ---------- 狀態 ---------- */
+const S = {step:0, ind:null, q:0, a:{}, plan:null, mode:null, ctl:null, canRetry:false};
+const $app = document.getElementById("app");
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const arr = v => Array.isArray(v) ? v : [];
+function toast(msg){const t=document.getElementById("toast");t.textContent=msg;t.hidden=false;clearTimeout(t._h);t._h=setTimeout(()=>t.hidden=true,2200)}
+function setSteps(){document.querySelectorAll("#steps span").forEach(s=>{const n=+s.dataset.s;s.className=n===S.step?"on":n<S.step?"done":""})}
+function freshAnswers(){return {brand:"",desc:"",indText:"",audience:[],audienceCustom:"",usp:"",face:"",platforms:[],cta:"",freq:""}}
+
+/* ---------- Step 1：行業 ---------- */
+function renderIndustry(){
+  S.step=0; setSteps();
+  $app.innerHTML = `<div class="fade">
+    <span class="eyebrow mono">Step 01 / 揀行業</span>
+    <h1 class="h-xl">答 7 條問題，<br>睇下 JVM 點幫你拍出 <em>品牌 IP</em></h1>
+    <p class="lede">揀你所屬嘅行業，AI 會按你嘅答案，即時整理出 JVM 為你度身嘅 IP 方案：人設定位、內容方向、分鏡腳本，同埋由睇片到成交嘅引流留客路徑。策劃、拍攝、剪接全部由 JVM 團隊負責，你只需要出鏡。</p>
+    <div class="grid-ind">${INDUSTRIES.map(i=>`
+      <button class="tile" data-id="${i.id}"><b>${esc(i.name)}</b><small>${esc(i.hint)}</small><span class="mono">開始 →</span></button>`).join("")}
+    </div></div>`;
+  $app.querySelectorAll(".tile").forEach(b=>b.onclick=()=>{
+    const ind = INDUSTRIES.find(i=>i.id===b.dataset.id);
+    if(S.ind?.id!==ind.id) S.a=freshAnswers();
+    S.ind=ind; S.q=0; renderQuestion();
+  });
+}
+
+/* ---------- Step 2：問題 ---------- */
+function renderQuestion(){
+  S.step=1; setSteps();
+  const Q = QUESTIONS[S.q], a=S.a, ind=S.ind, isOther=ind.id==="other";
+  let body="";
+  if(Q.type==="text"){
+    body = `${isOther?`<div class="field"><label for="f-ind">你做邊一行？</label><input type="text" id="f-ind" value="${esc(a.indText)}" placeholder="例如：花店、會計師樓、汽車維修"></div>`:""}
+      <div class="field"><label for="f-brand">品牌／店名</label><input type="text" id="f-brand" value="${esc(a.brand)}" placeholder="例如：${esc(ind.demo.brand||"你嘅品牌名")}"></div>
+      <div class="field"><label for="f-desc">一句講你做緊乜</label><input type="text" id="f-desc" value="${esc(a.desc)}" placeholder="例如：${esc(ind.demo.desc||"喺邊區、做乜、主打咩")}"></div>`;
+  } else if(Q.type==="textarea"){
+    body = `<div class="field"><textarea id="f-usp" aria-label="${esc(Q.title)}" placeholder="例如：${esc(ind.demo.usp||"做咗15年、全人手製作、24小時內回覆")}">${esc(a.usp)}</textarea></div>`;
+  } else {
+    const cur = a[Q.key];
+    body = `<div class="chips" role="group" aria-label="${esc(Q.title)}">${Q.options.map(o=>{
+      const on = Q.type==="multi" ? cur.includes(o) : cur===o;
+      return `<button class="chip" aria-pressed="${on}" data-v="${esc(o)}">${esc(o)}</button>`}).join("")}</div>
+      ${Q.custom?`<div class="field" style="margin-top:16px"><label for="f-custom">補充（選填）</label><input type="text" id="f-custom" value="${esc(a.audienceCustom)}" placeholder="例如：30–45歲、住新界東、重視健康"></div>`:""}`;
+  }
+  const pct = Math.round((S.q)/QUESTIONS.length*100);
+  $app.innerHTML = `<div class="qwrap fade">
+    <div class="qhead">
+      <span class="pill">行業 <b>${esc(ind.name)}</b> <button class="linkbtn" id="chg">更改</button></span>
+      ${ind.demo.brand?`<button class="linkbtn" id="demo">填入示範答案</button>`:""}
+    </div>
+    <div class="bar" aria-hidden="true"><i style="width:${pct}%"></i></div>
+    <span class="eyebrow mono">Q${S.q+1} / ${QUESTIONS.length}</span>
+    <h2 class="qtitle">${esc(Q.title)}</h2>
+    <p class="qhint">${esc(Q.hint)}</p>
+    ${body}
+    <div class="qnav">
+      <button class="btn" id="back">← 上一步</button>
+      <span class="kbd">按 Enter 繼續</span>
+      <button class="btn ${S.q===QUESTIONS.length-1?"rec":"primary"}" id="next">${S.q===QUESTIONS.length-1?"生成 IP 方案":"下一步 →"}</button>
+    </div></div>`;
+
+  const bind=(id,k)=>{const el=document.getElementById(id); if(el) el.oninput=()=>{a[k]=el.value; validate()}};
+  bind("f-ind","indText"); bind("f-brand","brand"); bind("f-desc","desc"); bind("f-usp","usp"); bind("f-custom","audienceCustom");
+  $app.querySelectorAll(".chip").forEach(c=>c.onclick=()=>{
+    const v=c.dataset.v;
+    if(Q.type==="multi"){const i=a[Q.key].indexOf(v); i>=0?a[Q.key].splice(i,1):a[Q.key].push(v); c.setAttribute("aria-pressed",i<0)}
+    else {a[Q.key]=v; $app.querySelectorAll(".chip").forEach(x=>x.setAttribute("aria-pressed",x===c)); setTimeout(next,180)}
+    validate();
+  });
+  function validate(){
+    const n=document.getElementById("next");
+    if(Q.key==="brand") n.disabled = !a.brand.trim() || (isOther && !a.indText.trim());
+  }
+  function next(){
+    if(document.getElementById("next").disabled) return;
+    if(S.q<QUESTIONS.length-1){S.q++; renderQuestion()} else generate();
+  }
+  document.getElementById("next").onclick=next;
+  document.getElementById("back").onclick=()=>{ if(S.q===0) renderIndustry(); else {S.q--; renderQuestion()} };
+  document.getElementById("chg").onclick=renderIndustry;
+  const d=document.getElementById("demo");
+  if(d) d.onclick=()=>{
+    Object.assign(a,{brand:ind.demo.brand,desc:ind.demo.desc,usp:ind.demo.usp,
+      audience:a.audience.length?a.audience:["上班族"],face:a.face||"老闆本人",
+      platforms:a.platforms.length?a.platforms:["Instagram Reels","小紅書"],cta:a.cta||"WhatsApp 查詢",freq:a.freq||"8 條（標準）"});
+    S.q=QUESTIONS.length-1; renderQuestion(); toast("已填入示範答案");
+  };
+  $app.onkeydown=e=>{ if(e.key==="Enter" && e.target.tagName!=="TEXTAREA" && e.target.tagName!=="BUTTON"){e.preventDefault(); next()} };
+  validate();
+  const first=$app.querySelector("input,textarea"); if(first) first.focus({preventScroll:true});
+}
+
+/* ---------- Step 3：生成 ---------- */
+const answerSummary = () => {
+  const a=S.a, aud=[...a.audience, a.audienceCustom].filter(Boolean).join("、");
+  return {
+    industry: S.ind.id==="other" ? (a.indText||"其他") : S.ind.name,
+    brand:a.brand, desc:a.desc||"（未填）", audience:aud||"一般大眾", usp:a.usp||"（未填）",
+    face:a.face||"未諗好", platforms:a.platforms.join("、")||"Instagram Reels", cta:a.cta||"WhatsApp 查詢", freq:a.freq||"8 條（標準）"
+  };
+};
+const freqCount = f => f.startsWith("4")?4 : f.startsWith("12")?12 : 8;
+
+function renderLoading(){
+  S.step=2; setSteps();
+  const s=answerSummary();
+  $app.innerHTML = `<div class="fade">
+    <div class="slate live" id="slate">
+      <div class="stripes" aria-hidden="true"></div>
+      <div class="slate-rows">
+        <div><span class="mono">Production</span><b>${esc(s.brand)}</b></div>
+        <div><span class="mono">Industry</span><b>${esc(s.industry)}</b></div>
+        <div><span class="mono">Platform</span><b style="font-size:15px">${esc(s.platforms)}</b></div>
+        <div><span class="mono">Goal</span><b style="font-size:15px">${esc(s.cta)}</b></div>
+      </div>
+      <div class="stage" id="stage">
+        ${["分析目標客痛點","設計 IP 人設同定位","規劃內容支柱","撰寫示範拍攝腳本","設計引流留客路徑"].map((t,i)=>`<p class="${i===0?"now":""}">${t}</p>`).join("")}
+      </div>
+      <div class="slate-foot"><span class="mono" id="count">AI 思考中…</span><button class="btn" id="stop">停止</button></div>
+    </div></div>`;
+  let i=0; const ps=[...document.querySelectorAll("#stage p")];
+  S.stageTimer=setInterval(()=>{ if(i<ps.length-1){ps[i].className="ok"; i++; ps[i].className="now"} },7000);
+}
+function stopLoading(){clearInterval(S.stageTimer)}
+
+async function generate(){
+  renderLoading();
+  S.ctl = new AbortController();
+  document.getElementById("stop").onclick=()=>S.ctl.abort();
+  let text="";
+  try{
+    const res = await fetch("/api/generate", {
+      method:"POST", headers:{"Content-Type":"application/json"}, signal:S.ctl.signal,
+      body: JSON.stringify({...answerSummary()})
+    });
+    if(!res.ok || !res.body) throw {code: res.status===503 ? "not_configured" : "http_"+res.status};
+    const reader=res.body.getReader(), dec=new TextDecoder();
+    for(;;){
+      const {done,value}=await reader.read(); if(done) break;
+      text+=dec.decode(value,{stream:true});
+      const c=document.getElementById("count"); if(c) c.textContent=`撰寫中 · ${text.length.toLocaleString()} 字`;
+    }
+    stopLoading();
+    const m=text.match(/\{[\s\S]*\}/);
+    const plan = m ? JSON.parse(m[0]) : null;
+    if(!plan || !plan.ip_name || !arr(plan.pillars).length || !arr(plan.scripts).length) throw {code:"bad_shape"};
+    showPlan(plan,"ai");
+  }catch(e){
+    stopLoading();
+    if(e?.name==="AbortError"){ S.q=QUESTIONS.length-1; renderQuestion(); toast("已停止生成"); return }
+    const why = e?.code==="not_configured" ? "AI 未設定（伺服器未有 API Key），" : "AI 暫時未能回應，";
+    S.canRetry = e?.code!=="not_configured";
+    showPlan(buildFallback(),"fallback", why+"以下係按行業範本整理嘅方案。");
+  }
+}
+
+/* ---------- 範本方案（冇 AI 時） ---------- */
+function buildFallback(){
+  const ind=S.ind, s=answerSummary(), brand=s.brand;
+  const faceStyle = {
+    "老闆本人":"老闆對鏡頭講嘢 + JVM 補拍 B-roll 穿插，真實親切",
+    "員工／團隊":"員工輪流出鏡，建立「成間舖都係自己人」嘅親切感",
+    "唔露面，拍產品同過程":"JVM 拍手部特寫 + 產品靚鏡，配大字幕同旁白",
+    "未諗好":"JVM 建議老闆本人出鏡——真人面孔信任度最高，JVM 導演會現場引導，唔使驚鏡頭"
+  }[s.face] || "老闆對鏡頭講嘢 + B-roll 穿插";
+  const ctaAction = {
+    "WhatsApp 查詢":"片尾同 bio 放 WhatsApp 一鍵連結，預設訊息「我喺片度睇到你」，方便追蹤來源",
+    "預約到店":"用 WhatsApp／預約連結約時間，首次到店送小禮物，當場邀請客人 follow",
+    "網店落單":"bio 連結直達熱賣產品頁，限時優惠碼只喺片度公佈",
+    "留低聯絡資料":"用 lead magnet 換取電話或電郵，24 小時內人手跟進",
+    "Follow 專頁":"每條片預告下一集，建立系列追看感，再慢慢導向查詢"
+  }[s.cta];
+  const n=freqCount(s.freq);
+  const days = ["第 1 週","第 2 週","第 3 週","第 4 週"];
+  const shortUsp = (S.a.usp||"").split(/[，,。]/)[0].slice(0,14);
+  return {
+    ip_name: `${brand}${ind.role==="主理人"||ind.role.length>4?"":"・"}${ind.role}`.slice(0,14),
+    tagline: ind.tagline,
+    positioning: `專為${s.audience}而設嘅${s.industry}${ind.role}。${shortUsp?`憑住「${shortUsp}」，`:""}將專業變成人人睇得明、睇完想搵你嘅短片。`,
+    traits: ["真實唔造作","專業講人話","有溫度"],
+    audience_pains: ind.pains,
+    pillars: ind.pillars.map(([name,ratio,desc,examples])=>({name,ratio,desc,examples})),
+    production: {
+      format: "9:16 直式短片" + (s.platforms.includes("小紅書")?"，小紅書同步出圖文筆記":""),
+      length: s.platforms.includes("YouTube")?"15–45 秒，每月加 1 條 3–5 分鐘長片":"15–45 秒",
+      style: faceStyle,
+      jvm_does: ["IP 人設定位同每月內容企劃","編寫分鏡腳本同 hook 標題","專業攝影師、燈光、收音器材上門拍攝","剪接、字幕、配樂同封面設計"],
+      client_does: ["每月預留半日拍攝日","出鏡講你最熟悉嘅專業","提供場地、產品或客人個案（如有）"].concat(ind.extraTip?["JVM 會把關合規字眼，你只需確認內容"]:[]),
+      shoot_day: `每月 1 次拍攝日，半日內喺你嘅${s.industry==="零售・網店"?"貨倉或工作室":"舖頭或工作地點"}一次過拍晒 ${n} 條片。`
+    },
+    scripts: ind.scripts.map(sc=>({title:sc.title,hook:sc.hook,shots:sc.shots.map(([time,visual,voice])=>({time,visual,voice})),cta:`引導客人「${s.cta}」`})),
+    funnel: [
+      {stage:"吸引",action:`喺 ${s.platforms} 出片，頭 3 秒直接講「${ind.pains[0]}」呢類痛點，用系列式標題。`},
+      {stage:"建立信任",action:"專頁置頂 3 條片：你係邊個、真實成果或個案、價錢／流程點樣。"},
+      {stage:"互動",action:`片尾問一條問題，並講「留言『${ind.kw}』」，提高留言率同演算法推送。`},
+      {stage:"留資料",action:`自動或人手 DM 送出「${ind.magnet[0]}」，順勢交換 WhatsApp 聯絡。`},
+      {stage:"成交",action:ctaAction},
+      {stage:"回頭客",action:"建立 WhatsApp 廣播或會員群組，每月一次專屬優惠，邀請客人拍片分享（UGC）再轉載。"}
+    ],
+    lead_magnet: {name:ind.magnet[0],desc:ind.magnet[1]},
+    schedule: days.map((day,i)=>{const p=ind.pillars[i]; return {day,pillar:p[0],idea:`主打「${p[3][0]}」，每週 ${Math.round(n/4)} 條`}}),
+    kpis: [{metric:"3 秒留存率",target:"60% 以上"},{metric:"完播率",target:"35% 以上"},{metric:"每月私訊／查詢",target:n>=8?"30 個以上":"15 個以上"}]
+  };
+}
+
+/* ---------- Step 3：方案 ---------- */
+function showPlan(plan, mode, note){
+  S.plan=plan; S.mode=mode; S.step=2; setSteps();
+  const s=answerSummary(), p=plan;
+  const pillars=arr(p.pillars), total=pillars.reduce((t,x)=>t+(+x.ratio||0),0)||1;
+  const colors=["var(--p1)","var(--p2)","var(--p3)","var(--p4)","var(--muted)"];
+  const txtOn=["var(--on-ink)","#fff","var(--tape-ink)","#fff","#fff"];
+  const f=p.production||{};
+  $app.innerHTML = `<div class="fade">
+    ${note?`<div class="notice"><span>${esc(note)}</span>${S.canRetry?`<button class="btn" id="retry">用 AI 再生成</button>`:""}</div>`:""}
+    <div class="result">
+      <aside class="idcard">
+        <div class="stripes" aria-hidden="true"></div>
+        <div class="idbody">
+          <span class="mono">JVM × ${esc(s.brand)} · IP 人設</span>
+          <h1 class="ipname">${esc(p.ip_name)}</h1>
+          <span class="tagline">${esc(p.tagline)}</span>
+          <dl class="kv">
+            <dt>BRAND</dt><dd>${esc(s.brand)}</dd>
+            <dt>性格</dt><dd class="traits">${arr(p.traits).map(t=>`<span>${esc(t)}</span>`).join("")}</dd>
+            <dt>出鏡</dt><dd>${esc(s.face)}</dd>
+            <dt>平台</dt><dd>${esc(s.platforms)}</dd>
+            <dt>目標</dt><dd>${esc(s.cta)}</dd>
+            <dt>產量</dt><dd>每月 ${esc(s.freq)}</dd>
+          </dl>
+        </div>
+        <div class="idactions">
+          <button class="btn primary" id="copy">複製成份方案</button>
+          <button class="btn" id="edit">修改答案</button>
+          <button class="btn" id="restart">換行業重新開始</button>
+        </div>
+      </aside>
+
+      <div>
+        <section class="sec">
+          <span class="eyebrow mono">定位</span>
+          <h3>你嘅 IP 係點樣一個人</h3>
+          <p class="positioning" style="margin-top:12px">${esc(p.positioning)}</p>
+          <ul class="pains">${arr(p.audience_pains).map(x=>`<li>${esc(x)}</li>`).join("")}</ul>
+        </section>
+
+        <section class="sec">
+          <span class="eyebrow mono">內容支柱</span>
+          <h3>拍咩：內容比例</h3>
+          <p class="sub">每 10 條片，大約按以下比例分配。</p>
+          <div class="ratio" role="img" aria-label="內容比例">${pillars.map((x,i)=>`<div style="flex:${(+x.ratio||0)/total};background:${colors[i%5]};color:${txtOn[i%5]}">${Math.round((+x.ratio||0)/total*100)}%</div>`).join("")}</div>
+          <div class="pillars">${pillars.map((x,i)=>`
+            <div class="pillar"><header><span class="sw" style="background:${colors[i%5]}"></span><b>${esc(x.name)}</b><span class="mono">${Math.round((+x.ratio||0)/total*100)}%</span></header>
+            <p>${esc(x.desc)}</p><ul>${arr(x.examples).map(e=>`<li>${esc(e)}</li>`).join("")}</ul></div>`).join("")}
+          </div>
+        </section>
+
+        <section class="sec">
+          <span class="eyebrow mono">JVM 製作安排</span>
+          <h3>JVM 點幫你拍</h3>
+          <p class="sub">策劃、拍攝、剪接由 JVM 團隊包辦，你專心做好你嘅生意。</p>
+          <div class="filmgrid">
+            <div><span class="mono">格式</span><b>${esc(f.format)}</b></div>
+            <div><span class="mono">片長</span><b>${esc(f.length)}</b></div>
+            <div><span class="mono">風格</span><b>${esc(f.style)}</b></div>
+          </div>
+          <div class="twocol">
+            <div class="side jvm"><h4>JVM 負責</h4><ul>${arr(f.jvm_does).map(x=>`<li>${esc(x)}</li>`).join("")}</ul></div>
+            <div class="side"><h4>你只需要</h4><ul>${arr(f.client_does).map(x=>`<li>${esc(x)}</li>`).join("")}</ul></div>
+          </div>
+          ${f.shoot_day?`<p class="shootday"><span class="mono">拍攝日</span>${esc(f.shoot_day)}</p>`:""}
+        </section>
+
+        <section class="sec">
+          <span class="eyebrow mono">分鏡腳本</span>
+          <h3>JVM 編劇示範腳本</h3>
+          <p class="sub">拍攝日 JVM 導演會照住分鏡帶你拍，你只需要講對白。</p>
+          ${arr(p.scripts).map((sc,i)=>`
+            <article class="script">
+              <div class="script-head"><span class="mono">Script ${String.fromCharCode(65+i)}</span><b>${esc(sc.title)}</b>
+                <div class="hook"><span>HOOK</span>${esc(sc.hook)}</div></div>
+              <div class="tablewrap"><table><thead><tr><th>時間</th><th>畫面</th><th>對白／字幕</th></tr></thead><tbody>
+                ${arr(sc.shots).map(sh=>`<tr><td class="tc">${esc(sh.time)}</td><td>${esc(sh.visual)}</td><td>${esc(sh.voice)}</td></tr>`).join("")}
+              </tbody></table></div>
+              ${sc.cta?`<div class="cta-line"><b>CTA</b>${esc(sc.cta)}</div>`:""}
+            </article>`).join("")}
+        </section>
+
+        <section class="sec">
+          <span class="eyebrow mono">引流留客</span>
+          <h3>由睇片到成為熟客</h3>
+          <p class="sub">每一步都要有下一步，唔好靠客人自己搵你。</p>
+          <ol class="funnel">${arr(p.funnel).map((x,i)=>`<li><span class="n">${i+1}</span><div><b>${esc(x.stage)}</b><p>${esc(x.action)}</p></div></li>`).join("")}</ol>
+          ${p.lead_magnet?`<div class="magnet"><div><span class="mono">留客誘因 Lead Magnet</span><b>${esc(p.lead_magnet.name)}</b><p>${esc(p.lead_magnet.desc)}</p></div></div>`:""}
+        </section>
+
+        <section class="sec">
+          <span class="eyebrow mono">發佈節奏</span>
+          <h3>第一個月發佈排程</h3>
+          <p class="sub">JVM 拍攝日一次過拍晒，按週發佈。</p>
+          <div class="week">${arr(p.schedule).map(d=>`<div class="day"><span class="mono">${esc(d.day)}</span><b>${esc(d.pillar)}</b><p>${esc(d.idea)}</p></div>`).join("")}</div>
+          <div class="kpis">${arr(p.kpis).map(k=>`<div><span class="mono">${esc(k.metric)}</span><b>${esc(k.target)}</b></div>`).join("")}</div>
+        </section>
+
+        <section class="sec">
+          <span class="eyebrow mono">合作流程</span>
+          <h3>同 JVM 合作嘅 6 個步驟</h3>
+          <ol class="funnel" style="margin-top:16px">${JVM.process.map(([t,d],i)=>`<li><span class="n">${i+1}</span><div><b>${esc(t)}</b><p>${esc(d)}</p></div></li>`).join("")}</ol>
+        </section>
+
+        <div class="endcard">
+          <div><h3>預約 JVM 免費 IP 策略諮詢</h3><p>呢份只係 AI 初稿。約 JVM 傾 30 分鐘，我哋會為 ${esc(s.brand)} 度身做正式企劃，一齊拍出第一個月嘅內容。</p></div>
+          <div class="endbtns">
+            ${JVM.whatsapp?`<a class="btn" href="https://wa.me/${JVM.whatsapp}?text=${encodeURIComponent(`你好 JVM，我係${s.brand}（${s.industry}），啱啱用咗 IP 拍攝藍圖，想預約免費策略諮詢。`)}" target="_blank" rel="noopener">WhatsApp 預約諮詢</a>`:""}
+            ${JVM.email?`<a class="btn ghost" href="mailto:${JVM.email}?subject=${encodeURIComponent(`IP 策略諮詢：${s.brand}`)}">電郵 JVM</a>`:""}
+            <button class="btn ghost" id="copy2">複製方案</button>
+          </div>
+        </div>
+      </div>
+    </div></div>`;
+  window.scrollTo({top:0});
+  document.getElementById("copy").onclick=copyPlan;
+  document.getElementById("copy2").onclick=copyPlan;
+  document.getElementById("edit").onclick=()=>{S.q=0; renderQuestion()};
+  document.getElementById("restart").onclick=()=>{S.ind=null; S.a=freshAnswers(); renderIndustry()};
+  const r=document.getElementById("retry"); if(r) r.onclick=generate;
+}
+
+function planText(){
+  const p=S.plan, s=answerSummary(), L=[];
+  L.push(`【JVM × ${s.brand}｜IP 拍攝方案】（${s.industry}）`,`人設：${p.ip_name}`,`口號：${p.tagline}`,`定位：${p.positioning}`,`性格：${arr(p.traits).join("、")}`,`客人痛點：${arr(p.audience_pains).join("／")}`,"");
+  L.push("■ 內容支柱"); arr(p.pillars).forEach(x=>L.push(`- ${x.name}（${x.ratio}%）：${x.desc}｜例：${arr(x.examples).join("、")}`)); L.push("");
+  const f=p.production||{}; L.push("■ JVM 製作安排",`格式：${f.format}`,`片長：${f.length}`,`風格：${f.style}`,"JVM 負責：",...arr(f.jvm_does).map(t=>`- ${t}`),"你只需要：",...arr(f.client_does).map(t=>`- ${t}`),`拍攝日：${f.shoot_day||""}`,"");
+  arr(p.scripts).forEach((sc,i)=>{L.push(`■ 腳本 ${String.fromCharCode(65+i)}：${sc.title}`,`Hook：${sc.hook}`); arr(sc.shots).forEach(sh=>L.push(`  ${sh.time}｜${sh.visual}｜${sh.voice}`)); if(sc.cta) L.push(`  CTA：${sc.cta}`); L.push("")});
+  L.push("■ 引流留客路徑"); arr(p.funnel).forEach((x,i)=>L.push(`${i+1}. ${x.stage}：${x.action}`));
+  if(p.lead_magnet) L.push(`留客誘因：${p.lead_magnet.name}——${p.lead_magnet.desc}`); L.push("");
+  L.push("■ 第一個月發佈排程"); arr(p.schedule).forEach(d=>L.push(`${d.day}｜${d.pillar}｜${d.idea}`));
+  L.push("","■ 首 30 日指標"); arr(p.kpis).forEach(k=>L.push(`- ${k.metric}：${k.target}`));
+  L.push("","策劃、拍攝、剪接由 JVM 團隊負責。"+(JVM.whatsapp?` WhatsApp：+${JVM.whatsapp}`:"")+(JVM.email?` 電郵：${JVM.email}`:""));
+  return L.join("\n");
+}
+async function copyPlan(){
+  const t=planText();
+  try{ await navigator.clipboard.writeText(t); toast("已複製成份方案") }
+  catch(e){
+    const ta=document.createElement("textarea"); ta.value=t; ta.style.position="fixed"; ta.style.opacity="0"; document.body.appendChild(ta); ta.select();
+    try{ document.execCommand("copy"); toast("已複製成份方案") }catch(_){ toast("瀏覽器唔允許複製，請手動選取") }
+    ta.remove();
+  }
+}
+
+S.a=freshAnswers();
+renderIndustry();
+</script>
