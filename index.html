@@ -1,5 +1,21 @@
+<!doctype html>
+<html lang="zh-HK">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>JVM IP 拍攝藍圖</title>
 <meta name="description" content="答 7 條問題，睇下 JVM 點樣幫你嘅品牌拍出 IP 短片。">
+<meta name="theme-color" content="#141A22">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32.png">
+<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="JVM IP">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta property="og:type" content="website">
+<meta property="og:title" content="JVM IP 拍攝藍圖">
+<meta property="og:description" content="答 7 條問題，AI 即時整理 JVM 為你度身嘅品牌 IP 短片方案。">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+HK:wght@400;500;700;900&family=JetBrains+Mono:wght@500;700&display=swap">
@@ -24,13 +40,20 @@
   --p1:#ECEFF3; --p2:#FF5B4D; --p3:#E8B936; --p4:#6D7785;
 }
 *{box-sizing:border-box}
-body{background:var(--ground);color:var(--ink);font-family:var(--sans);font-size:16px;line-height:1.65;-webkit-font-smoothing:antialiased}
+html{-webkit-text-size-adjust:100%}
+img{max-width:100%}
+[hidden]{display:none!important}
+body{margin:0;background:var(--ground);color:var(--ink);font-family:var(--sans);font-size:16px;line-height:1.65;-webkit-font-smoothing:antialiased}
 button{font:inherit;color:inherit;cursor:pointer}
 :focus-visible{outline:2px solid var(--rec);outline-offset:2px}
 .mono{font-family:var(--mono);letter-spacing:.06em;text-transform:uppercase;font-size:12px}
 
 /* top bar */
 .top{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:14px clamp(16px,4vw,40px);border-bottom:1px solid var(--line);background:var(--paper)}
+.topright{display:flex;align-items:center;gap:10px}
+.install{border:1px solid var(--ink);background:var(--paper);border-radius:999px;padding:5px 14px;font-size:13px;font-weight:700;white-space:nowrap}
+.brand img.logo{height:28px;width:auto;display:block}
+@media (display-mode: standalone){.install{display:none}}
 .brand .co{background:var(--ink);color:var(--on-ink);padding:1px 8px;border-radius:3px;font-family:var(--mono);letter-spacing:.08em}
 .brand{display:flex;align-items:center;gap:10px;font-weight:900;font-size:17px;letter-spacing:.02em}
 .recdot{width:10px;height:10px;border-radius:50%;background:var(--rec);box-shadow:0 0 0 4px color-mix(in srgb,var(--rec) 20%,transparent);animation:blink 1.4s steps(2,start) infinite}
@@ -39,7 +62,8 @@ button{font:inherit;color:inherit;cursor:pointer}
 .steps span{padding:4px 10px;border-radius:3px;color:var(--muted)}
 .steps span.on{background:var(--ink);color:var(--on-ink)}
 .steps span.done{color:var(--ink)}
-@media (max-width:620px){.steps span:not(.on){display:none}}
+@media (max-width:620px){.steps{display:none}.top{padding:12px 16px}}
+.brand{white-space:nowrap}
 
 main{max-width:1120px;margin:0 auto;padding:clamp(24px,5vw,56px) clamp(16px,4vw,40px) 80px}
 h1,h2,h3{text-wrap:balance;margin:0}
@@ -209,11 +233,16 @@ tr:last-child td{border-bottom:none}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
 
+</head>
+<body>
 <header class="top">
-  <div class="brand"><span class="recdot" aria-hidden="true"></span><span class="co">JVM</span>IP 拍攝藍圖</div>
+  <div class="brand"><span class="recdot" aria-hidden="true"></span><span class="co" id="logo">JVM</span>IP 拍攝藍圖</div>
+  <div class="topright">
+  <button class="install" id="install" hidden>加到主畫面</button>
   <nav class="steps mono" id="steps" aria-label="進度">
     <span data-s="0">01 揀行業</span><span data-s="1">02 答問題</span><span data-s="2">03 IP 方案</span>
   </nav>
+  </div>
 </header>
 <main id="app"></main>
 <div class="toast" id="toast" hidden></div>
@@ -222,6 +251,8 @@ tr:last-child td{border-bottom:none}
 /* ---------- JVM 公司設定（改呢度就得） ---------- */
 const JVM = {
   name: "JVM",
+  logo: "",              // 例如 "/brand/logo.png"（放喺 brand 資料夾）；留空就顯示文字 JVM
+  brandColor: "",        // JVM 主色，例如 "#E0392C"；留空用預設紅色
   whatsapp: "",          // 例如 "85291234567"（國家碼 + 號碼，唔使 + 號）；留空就唔顯示 WhatsApp 掣
   email: "",             // 例如 "hello@jvm.hk"；留空就唔顯示
   process: [
@@ -691,6 +722,26 @@ async function copyPlan(){
   }
 }
 
+/* ---------- 品牌、安裝、離線 ---------- */
+if(JVM.brandColor) document.documentElement.style.setProperty("--rec", JVM.brandColor);
+if(JVM.logo){ const l=document.getElementById("logo"); const img=new Image(); img.src=JVM.logo; img.alt=JVM.name; img.className="logo"; img.onload=()=>l.replaceWith(img); }
+(function(){
+  const btn=document.getElementById("install");
+  const standalone = matchMedia("(display-mode: standalone)").matches || navigator.standalone;
+  const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform==="MacIntel" && navigator.maxTouchPoints>1);
+  let deferred=null;
+  addEventListener("beforeinstallprompt", e=>{ e.preventDefault(); deferred=e; if(!standalone) btn.hidden=false; });
+  addEventListener("appinstalled", ()=>{ btn.hidden=true; toast("已加到主畫面"); });
+  if(isIOS && !standalone) btn.hidden=false;
+  btn.onclick=async()=>{
+    if(deferred){ deferred.prompt(); const r=await deferred.userChoice; deferred=null; if(r.outcome==="accepted") btn.hidden=true; }
+    else toast("喺 Safari 撳底部「分享」→「加至主畫面」");
+  };
+  if("serviceWorker" in navigator && location.protocol!=="file:") navigator.serviceWorker.register("/sw.js").catch(()=>{});
+})();
+
 S.a=freshAnswers();
 renderIndustry();
 </script>
+</body>
+</html>

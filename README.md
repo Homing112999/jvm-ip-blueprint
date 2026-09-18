@@ -32,18 +32,38 @@ AI 用 Claude（`claude-opus-5`），喺伺服器端呼叫，API Key 唔會俾�
 
 之後每次 push 上 GitHub，Vercel 都會自動更新網站。
 
-## 改公司資料
+## 改公司資料、logo、顏色
 
 打開 `index.html`，搵 `const JVM = {`：
 
 ```js
 const JVM = {
   name: "JVM",
+  logo: "/brand/logo.png",   // 把 logo 放入 brand 資料夾；留空就顯示文字 JVM
+  brandColor: "#E0392C",     // JVM 主色；留空用預設紅色
   whatsapp: "85291234567",   // 填咗先會顯示「WhatsApp 預約諮詢」掣
   email: "hello@jvm.hk",     // 填咗先會顯示「電郵 JVM」掣
   process: [ ... ]           // 合作流程 6 步，可以自己改字
 };
 ```
+
+手機主畫面圖示喺 `icons/` 資料夾（`icon-192.png`、`icon-512.png`、`maskable-512.png`、`apple-touch-icon.png`、`favicon-32.png`），用同名檔案覆蓋就換到。
+
+## 加到手機主畫面（App 形式）
+
+網站已經係 PWA，用手機開：
+
+- **iPhone（Safari）**：撳底部「分享」→「加至主畫面」
+- **Android（Chrome）**：撳頁面右上角「加到主畫面」掣
+
+加咗之後會好似 app 咁全螢幕開，有 JVM 圖示，冇網絡都開到頁面（AI 生成就要有網絡）。
+
+## 用自己嘅網域（例如 ip.jvm.hk）
+
+1. Vercel Project → **Settings → Domains** → 輸入 `ip.jvm.hk` → Add。
+2. Vercel 會顯示一條 DNS 紀錄（通常係 `CNAME ip → cname.vercel-dns.com`）。
+3. 去你買網域嘅地方（例如 GoDaddy、Cloudflare、HKDNR）加呢條紀錄。
+4. 等幾分鐘至幾個鐘，Vercel 顯示 Valid 就用得，HTTPS 會自動設定。
 
 ## 本機測試
 
