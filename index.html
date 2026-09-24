@@ -255,6 +255,7 @@ tr:last-child td{border-bottom:none}
 .side.jvm{border:2px solid var(--ink)}
 .shootday{margin:14px 0 0;display:flex;gap:12px;align-items:baseline;flex-wrap:wrap;font-size:15px}
 .shootday .mono{background:var(--tape);color:var(--tape-ink);padding:2px 8px;border-radius:3px;font-size:11px}
+.shootday.note .mono{background:var(--rec);color:#fff}
 
 .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--ink);color:var(--on-ink);padding:10px 18px;border-radius:6px;font-size:14px;z-index:9}
 .fade{animation:fade .35s ease both}
@@ -704,6 +705,22 @@ const SHOOT = {
    ]
   ]
  },
+ "bar": {
+  "loc": ["吧枱（暖燈、背後酒櫃）", "卡座／全景位置", "門口招牌同街景（夜晚）"],
+  "props": ["招牌雞尾酒 2 杯（一杯做特寫）", "自家浸材料樽、香草、水果", "調酒工具（搖酒壺、冰球）", "本季酒單"],
+  "broll": ["搖酒同倒酒慢鏡", "冰球落杯特寫", "燈光同人流氣氛鏡", "客人舉杯一刻"],
+  "titles": [["第一次嚟應該叫咩", "睇唔明酒單？講你鍾意嘅味道就得。"],
+             ["呢杯酒點解要等 5 分鐘", "快唔到，因為呢一步真係要等。"],
+             ["星期五夜晚嘅我哋", "10 點之後，係另一個樣。"],
+             ["唔飲得甜嘅可以叫呢杯", "怕甜？呢 3 杯啱你。"]]},
+ "wine": {
+  "loc": ["酒倉／貨架（展示存貨量）", "試酒枱（打好燈）", "客戶餐廳現場（配餐畫面）"],
+  "props": ["主打酒款 3 至 5 支", "酒杯同開瓶工具", "價目表或酒單規劃表", "白板（計毛利用）"],
+  "broll": ["倒酒同掛杯特寫", "酒標近鏡", "倉庫全景同出貨", "餐廳配餐畫面"],
+  "titles": [["西餐廳最好賣嘅 3 隻紅酒", "做咗批發十年，賣得最多就係呢 3 隻。"],
+             ["入錯一箱酒，蝕幾多", "好多老闆入貨前唔計呢條數。"],
+             ["$150 以下點揀先唔失禮", "價錢唔高，都可以好企理。"],
+             ["酒水毛利應該點計", "計錯一個數，成年白做。"]]},
  "other": {
   "loc": [
    "工作間（做嘢實拍）",
@@ -824,6 +841,22 @@ const INDUSTRIES = [
   scripts:[{title:"狗狗成日舔腳？可能係呢個原因",hook:"唔好以為佢只係扮可愛。",shots:[["0–3s","狗狗舔腳特寫","「唔係扮可愛。」"],["3–18s","管家檢查腳掌講3個原因","字幕"],["18–26s","示範清潔方法","步驟字幕"],["26–30s","CTA","「留言『清單』送護理清單。」"]]},
    {title:"沖涼前 vs 沖涼後",hook:"入嚟嗰陣，佢係一舊地拖。",shots:[["0–3s","打結毛狗狗","「一舊地拖。」"],["3–20s","美容過程快剪","溫柔手法特寫"],["20–27s","蓬鬆出場慢鏡","音樂轉高"],["27–30s","主人接返","「下個月見！」"]]}],
   magnet:["毛孩護理清單","留言「清單」即 DM 送清單 + 首次美容優惠"]},
+ {id:"bar",name:"酒吧・酒館",hint:"調酒師人設 · 氣氛實拍",role:"主理人",kw:"酒單",tagline:"一杯酒，一個場",
+  demo:{brand:"Corner 18",desc:"西環街角雞尾酒吧，主打自家調製",usp:"每季換酒單，全部自家浸材料"},
+  pains:["唔知飲咩好，睇唔明酒單","怕去錯場、怕貴","想搵有氣氛又唔嘈嘅地方"],
+  pillars:[["調酒過程",35,"由落材料到成品一鏡到底，睇住都想飲",["招牌酒點樣調出嚟","自家浸嘅材料係咩"]],["酒單導讀",25,"用人話講清楚啲酒點揀",["第一次嚟應該叫咩","唔飲得甜嘅可以叫呢杯"]],["場內氣氛",25,"夜晚燈光、音樂、人氣，賣體驗",["星期五夜晚嘅 Corner 18","坐呢個位最舒服"]],["主理人日常",15,"人設：點解開酒吧、行內故事",["開酒吧最難嘅一件事","收工後我會飲咩"]]],
+  scripts:[{title:"第一次嚟，應該叫咩？",hook:"睇唔明酒單？講你鍾意嘅味道就得。",shots:[["0–3s","調酒師企吧枱後對鏡頭","「睇唔明酒單？唔使驚。」"],["3–14s","三杯酒逐杯特寫","「鍾意甜、酸、定烈？我幫你揀。」"],["14–25s","調製過程快剪","講每杯嘅味道同度數"],["25–30s","成品放枱 + 客人舉杯","「留言『酒單』，我send俾你。」"]]},
+   {title:"呢杯酒點解要等 5 分鐘",hook:"快唔到，因為呢一步真係要等。",shots:[["0–3s","計時器開始 + 調酒師搖酒","「5 分鐘，一步都慳唔到。」"],["3–16s","浸材料、冰球、搖酒特寫","逐步講點解要咁做"],["16–26s","倒酒慢鏡、香氣噴霧","「呢陣香味就係等返嚟嘅。」"],["26–30s","客人第一啖反應","「值唔值？你試過就知。」"]]}],
+  magnet:["本季精選酒單","留言「酒單」即 DM 送本季酒單 + 首杯特飲優惠"],
+  extraTip:"酒精內容要註明「未成年人士不宜飲酒」，平台亦可能限制酒類推廣觸及率，JVM 會幫你把關。"},
+ {id:"wine",name:"紅酒批發",hint:"選酒顧問人設 · B2B 內容",role:"選酒顧問",kw:"酒單",tagline:"你間餐廳嘅酒單，我幫你砌",
+  demo:{brand:"Vinora 酒業",desc:"紅酒批發商，供應餐廳、酒吧同私人會所",usp:"直接同酒莊入貨，最快 24 小時到貨"},
+  pains:["唔知入邊隻酒先好賣","客路唔同，酒單砌唔啱","怕入錯貨積壓資金"],
+  pillars:[["選酒知識",35,"教餐飲老闆點揀酒，建立專業權威",["西餐廳最好賣嘅 3 隻紅酒","$150 以下有咩揀"]],["酒單策劃",25,"直接講生意：點樣靠酒單賺錢",["酒單應該放幾多隻酒","酒水毛利點計先健康"]],["倉存同貨源",20,"展示實力，令對方信你供得到貨",["我哋個倉入面有咩","由酒莊到你舖頭要幾耐"]],["客戶個案",20,"同行成功例子最有說服力",["呢間餐廳換咗酒單之後","酒吧老闆點揀入門酒"]]],
+  scripts:[{title:"西餐廳最好賣嘅 3 隻紅酒",hook:"做咗批發十年，賣得最多就係呢 3 隻。",shots:[["0–3s","三支酒排開喺枱面","「十年經驗，就係呢 3 隻。」"],["3–16s","逐支拎起，講產區同價位","字幕：入貨價、建議售價、毛利"],["16–26s","倒酒入杯 + 配餐畫面","「配牛扒、配意粉都啱。」"],["26–30s","顧問對鏡頭","「想要完整酒單？留言『酒單』。」"]]},
+   {title:"入錯一箱酒，蝕幾多？",hook:"好多老闆入貨前唔計呢條數。",shots:[["0–3s","倉庫入面一箱未開嘅酒","「呢箱擺咗成年。」"],["3–15s","白板計數：入貨價、周轉、積壓","逐項講成本"],["15–26s","對比：啱嘅酒點樣幾星期走完","「同一筆錢，差好遠。」"],["26–30s","顧問企倉庫前","「唔肯定入咩？搵我傾。」"]]}],
+  magnet:["餐廳酒單規劃表","留言「酒單」即 DM 送酒單規劃表 + 報價"],
+  extraTip:"酒精內容要註明「未成年人士不宜飲酒」，B2B 內容亦要留意平台對酒類推廣嘅限制。"},
  {id:"other",name:"其他行業",hint:"自填行業 · 通用 IP 框架",role:"主理人",kw:"資料",tagline:"做得專業，更要講得出嚟",
   demo:{brand:"",desc:"",usp:""},
   pains:["唔知你同人有咩分別","怕服務唔值錢","唔信廣告"],
@@ -1035,7 +1068,7 @@ function buildFallback(){
   const days = ["第 1 週","第 2 週","第 3 週","第 4 週"];
   const shortUsp = (S.a.usp||"").split(/[，,。]/)[0].slice(0,14);
   return {
-    ip_name: `${brand}${ind.role==="主理人"||ind.role.length>4?"":"・"}${ind.role}`.slice(0,14),
+    ip_name: `${brand}・${ind.role}`.slice(0,16),
     tagline: ind.tagline,
     positioning: `專為${s.audience}而設嘅${s.industry}${ind.role}。${shortUsp?`憑住「${shortUsp}」，`:""}將專業變成人人睇得明、睇完想搵你嘅短片。`,
     traits: ["真實唔造作","專業講人話","有溫度"],
@@ -1046,7 +1079,8 @@ function buildFallback(){
       length: s.platforms.includes("YouTube")?"15–45 秒，每月加 1 條 3–5 分鐘長片":"15–45 秒",
       style: faceStyle,
       jvm_does: ["IP 人設定位同每月內容企劃","編寫分鏡腳本同 hook 標題","專業攝影師、燈光、收音器材上門拍攝","剪接、字幕、配樂同封面設計"],
-      client_does: ["每月預留半日拍攝日","出鏡講你最熟悉嘅專業","提供場地、產品或客人個案（如有）"].concat(ind.extraTip?["JVM 會把關合規字眼，你只需確認內容"]:[]),
+      client_does: ["每月預留半日拍攝日","出鏡講你最熟悉嘅專業","提供場地、產品或客人個案（如有）"].concat(ind.extraTip?["確認 JVM 擬好嘅合規字眼"]:[]),
+      note: ind.extraTip || "",
       shoot_day: `每月 1 次拍攝日，半日內喺你嘅${s.industry==="零售・網店"?"貨倉或工作室":"舖頭或工作地點"}一次過拍晒 ${n} 條片。`
     },
     scripts: ind.scripts.map(sc=>({title:sc.title,hook:sc.hook,shots:sc.shots.map(([time,visual,voice],i)=>({time,visual,voice,framing:FRAMING[i%FRAMING.length]})),cta:`引導客人「${s.cta}」`})),
@@ -1132,6 +1166,7 @@ function showPlan(plan, mode, note){
             <div class="side"><h4>你只需要</h4><ul>${arr(f.client_does).map(x=>`<li>${esc(x)}</li>`).join("")}</ul></div>
           </div>
           ${f.shoot_day?`<p class="shootday"><span class="mono">拍攝日</span>${esc(f.shoot_day)}</p>`:""}
+          ${f.note?`<p class="shootday note"><span class="mono">要注意</span>${esc(f.note)}</p>`:""}
         </section>
 
         <section class="sec">
@@ -1216,7 +1251,7 @@ function planText(){
   const p=S.plan, s=answerSummary(), L=[];
   L.push(`【JVM × ${s.brand}｜IP 拍攝方案】（${s.industry}）`,`人設：${p.ip_name}`,`口號：${p.tagline}`,`定位：${p.positioning}`,`性格：${arr(p.traits).join("、")}`,`客人痛點：${arr(p.audience_pains).join("／")}`,"");
   L.push("■ 內容支柱"); arr(p.pillars).forEach(x=>L.push(`- ${x.name}（${x.ratio}%）：${x.desc}｜例：${arr(x.examples).join("、")}`)); L.push("");
-  const f=p.production||{}; L.push("■ JVM 製作安排",`格式：${f.format}`,`片長：${f.length}`,`風格：${f.style}`,"JVM 負責：",...arr(f.jvm_does).map(t=>`- ${t}`),"你只需要：",...arr(f.client_does).map(t=>`- ${t}`),`拍攝日：${f.shoot_day||""}`,"");
+  const f=p.production||{}; L.push("■ JVM 製作安排",`格式：${f.format}`,`片長：${f.length}`,`風格：${f.style}`,"JVM 負責：",...arr(f.jvm_does).map(t=>`- ${t}`),"你只需要：",...arr(f.client_does).map(t=>`- ${t}`),`拍攝日：${f.shoot_day||""}`,...(f.note?[`要注意：${f.note}`]:[]),"");
   arr(p.scripts).forEach((sc,i)=>{L.push(`■ 腳本 ${String.fromCharCode(65+i)}：${sc.title}`,`Hook：${sc.hook}`); arr(sc.shots).forEach((sh,n)=>L.push(`  鏡頭${n+1}｜${sh.time}｜${sh.framing||""}｜${sh.visual}｜${sh.voice}`)); if(sc.cta) L.push(`  CTA：${sc.cta}`); L.push("")});
   if(p.shoot_list){L.push("■ 拍攝日清單",`地點：${arr(p.shoot_list.locations).join("、")}`,`道具：${arr(p.shoot_list.props).join("、")}`,`B-roll：${arr(p.shoot_list.broll).join("、")}`,"")}
   if(arr(p.title_bank).length){L.push("■ 片題庫"); arr(p.title_bank).forEach((t,i)=>L.push(`${i+1}. ${t.title}｜Hook：${t.hook}`)); L.push("")}
