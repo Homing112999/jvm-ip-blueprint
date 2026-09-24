@@ -52,7 +52,14 @@ button{font:inherit;color:inherit;cursor:pointer}
 .top{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:14px clamp(16px,4vw,40px);border-bottom:1px solid var(--line);background:var(--paper)}
 .topright{display:flex;align-items:center;gap:10px}
 .install{border:1px solid var(--ink);background:var(--paper);border-radius:999px;padding:5px 14px;font-size:13px;font-weight:700;white-space:nowrap}
-.brand img.logo{height:28px;width:auto;display:block}
+.logowrap{display:block;line-height:0}
+.brand img.logo{height:26px;width:auto;display:block}
+.brand img.ondark{display:none}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .brand img.onlight{display:none}:root:not([data-theme="light"]) .brand img.ondark{display:block}}
+:root[data-theme="dark"] .brand img.onlight{display:none}
+:root[data-theme="dark"] .brand img.ondark{display:block}
+.brand .sep{padding-left:10px;margin-left:10px;border-left:1px solid var(--line);font-weight:700}
+@media (max-width:420px){.brand .sep{display:none}}
 @media (display-mode: standalone){.install{display:none}}
 .brand .co{background:var(--ink);color:var(--on-ink);padding:1px 8px;border-radius:3px;font-family:var(--mono);letter-spacing:.08em}
 .brand{display:flex;align-items:center;gap:10px;font-weight:900;font-size:17px;letter-spacing:.02em}
@@ -258,7 +265,7 @@ tr:last-child td{border-bottom:none}
 </head>
 <body>
 <header class="top">
-  <div class="brand"><span class="recdot" aria-hidden="true"></span><span class="co" id="logo">JVM</span>IP 拍攝藍圖</div>
+  <div class="brand"><span class="recdot" aria-hidden="true"></span><span class="co" id="logo">JVM</span><span class="sep">IP 拍攝藍圖</span></div>
   <div class="topright">
   <button class="install" id="install" hidden>加到主畫面</button>
   <nav class="steps mono" id="steps" aria-label="進度">
@@ -273,7 +280,8 @@ tr:last-child td{border-bottom:none}
 /* ---------- JVM 公司設定（改呢度就得） ---------- */
 const JVM = {
   name: "JVM",
-  logo: "",              // 例如 "/brand/logo.png"（放喺 brand 資料夾）；留空就顯示文字 JVM
+  logo: "brand/logo.png",           // 淺色底用（深色字）；留空就顯示文字 JVM
+  logoLight: "brand/logo-light.png", // 深色底用（白字）
   brandColor: "",        // JVM 主色，例如 "#E0392C"；留空用預設紅色
   whatsapp: "85296347605",              // 國家碼 + 號碼，唔使 + 號；留空就唔顯示 WhatsApp 掣
   email: "Justvibingmedia8@gmail.com",  // 留空就唔顯示電郵掣
@@ -1231,7 +1239,17 @@ async function copyPlan(){
 
 /* ---------- 品牌、安裝、離線 ---------- */
 if(JVM.brandColor) document.documentElement.style.setProperty("--rec", JVM.brandColor);
-if(JVM.logo){ const l=document.getElementById("logo"); const img=new Image(); img.src=JVM.logo; img.alt=JVM.name; img.className="logo"; img.onload=()=>l.replaceWith(img); }
+if(JVM.logo){
+  const l=document.getElementById("logo"), img=new Image();
+  img.src=JVM.logo;
+  img.onload=()=>{
+    const wrap=document.createElement("span"); wrap.className="logowrap";
+    const a=document.createElement("img"); a.src=JVM.logo; a.alt=JVM.name; a.className="logo onlight";
+    wrap.appendChild(a);
+    if(JVM.logoLight){ const b=document.createElement("img"); b.src=JVM.logoLight; b.alt=""; b.className="logo ondark"; wrap.appendChild(b) }
+    l.replaceWith(wrap);
+  };
+}
 (function(){
   const btn=document.getElementById("install");
   const standalone = matchMedia("(display-mode: standalone)").matches || navigator.standalone;
