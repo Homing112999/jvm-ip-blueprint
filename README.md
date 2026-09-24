@@ -22,15 +22,29 @@ AI 用 Claude（`claude-opus-5`），喺伺服器端呼叫，API Key 唔會俾�
 | `vercel.json` | 函數最長執行時間設定 |
 | `dev-server.js` | 本機測試用 |
 
-## 部署上 Vercel（一次過設定）
+## 上線方式
 
-1. 去 [console.anthropic.com](https://console.anthropic.com) 開一個 API Key，並喺 **Billing → Limits** 設定每月使用上限（網站係公開嘅，建議設上限）。
-2. 去 [vercel.com](https://vercel.com) 用 GitHub 登入，撳 **Add New → Project**，揀呢個 repo，直接 **Deploy**（唔使改任何 build 設定）。
-3. 入 Project → **Settings → Environment Variables**，加：
-   - `ANTHROPIC_API_KEY` = 你嘅 API Key
-4. 去 **Deployments**，喺最新嗰個撳 **Redeploy**，等環境變數生效。
+| 方式 | 費用 | 有冇 AI | 用途 |
+|---|---|---|---|
+| GitHub Pages（已開） | 免費 | 冇，用行業範本 | https://homing112999.github.io/jvm-ip-blueprint/ |
+| Cloudflare Pages | 免費，可商用 | 有 | 見客用 |
+| Vercel | 免費版唔俾商用 | 有 | 後備 |
 
-之後每次 push 上 GitHub，Vercel 都會自動更新網站。
+### 部署上 Cloudflare Pages（推薦）
+
+1. 去 [console.anthropic.com](https://console.anthropic.com) 開 API Key，Billing 入 US$5 並設每月上限。
+2. 去 [dash.cloudflare.com](https://dash.cloudflare.com) 開帳戶 → **Compute (Workers)** → **Workers & Pages** → **Create** → **Pages** → **Connect to Git**。
+3. 授權 GitHub，揀 `jvm-ip-blueprint`。
+4. Build settings 全部留空（framework preset: None，build command 留空，output directory 填 `.`）→ **Save and Deploy**。
+5. 部署完 → **Settings** → **Variables and Secrets** → **Add** → 揀 **Secret**：
+   - Name `ANTHROPIC_API_KEY`，Value 貼你條 key → Save。
+6. 返 **Deployments** → 最新一個 → **Retry deployment**，令 key 生效。
+
+`wrangler.toml` 已經設好 `nodejs_compat`，唔使自己加。
+
+### 部署上 Vercel（後備）
+
+Import repo → Deploy → Settings → Environment Variables 加 `ANTHROPIC_API_KEY` → Redeploy。
 
 ## 改公司資料、logo、顏色
 
