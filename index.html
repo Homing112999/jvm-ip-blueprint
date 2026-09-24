@@ -6,9 +6,9 @@
 <title>JVM IP 拍攝藍圖</title>
 <meta name="description" content="答 7 條問題，睇下 JVM 點樣幫你嘅品牌拍出 IP 短片。">
 <meta name="theme-color" content="#141A22">
-<link rel="manifest" href="/manifest.webmanifest">
-<link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32.png">
-<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="JVM IP">
@@ -76,11 +76,14 @@ h1,h2,h3{text-wrap:balance;margin:0}
 .grid-ind{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-top:32px}
 @media (max-width:900px){.grid-ind{grid-template-columns:repeat(3,minmax(0,1fr))}}
 @media (max-width:620px){.grid-ind{grid-template-columns:repeat(2,minmax(0,1fr))}}
-.tile{text-align:left;background:var(--paper);border:1px solid var(--line);border-radius:6px;padding:18px 18px 16px;display:flex;flex-direction:column;gap:6px;min-height:118px;transition:border-color .15s,transform .15s}
+.tile{text-align:left;background:var(--paper);border:1px solid var(--line);border-radius:6px;padding:18px;display:flex;flex-direction:column;gap:6px;min-height:118px;transition:border-color .15s,transform .15s}
 .tile:hover{border-color:var(--ink);transform:translateY(-2px)}
 .tile b{font-size:19px;font-weight:900}
 .tile small{color:var(--muted);font-size:13px;line-height:1.5}
-.tile .mono{color:var(--muted);font-size:11px;margin-top:auto}
+.tileacts{display:flex;gap:8px;margin-top:auto;padding-top:12px;flex-wrap:wrap}
+.tileacts button{font-size:13px;font-weight:700;border-radius:4px;padding:6px 12px;border:1px solid var(--ink);background:var(--ink);color:var(--on-ink)}
+.tileacts .demo{background:transparent;color:var(--ink)}
+.tileacts .demo:hover{background:var(--soft)}
 
 /* question */
 .qwrap{max-width:760px;margin:0 auto}
@@ -179,6 +182,25 @@ input:focus,textarea:focus{outline:none;border-color:var(--ink)}
 .twocol h4{margin:0 0 6px;font-size:15px}
 .twocol ul{margin:0;padding-left:18px;font-size:14px}
 
+.board{display:flex;gap:14px;padding:16px;overflow-x:auto;scroll-snap-type:x proximity}
+.frame{margin:0;flex:0 0 158px;display:flex;flex-direction:column;gap:8px;scroll-snap-align:start}
+.screen{position:relative;aspect-ratio:9/16;border-radius:8px;background:var(--ink);overflow:hidden;
+  background-image:linear-gradient(var(--line) 1px,transparent 1px),linear-gradient(90deg,var(--line) 1px,transparent 1px);
+  background-size:100% 33.33%,33.33% 100%;background-blend-mode:soft-light}
+.screen .tc{position:absolute;top:8px;left:8px;font-family:var(--mono);font-size:10px;background:var(--rec);color:#fff;padding:1px 6px;border-radius:2px}
+.screen .cam{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-family:var(--mono);font-size:10px;letter-spacing:.06em;color:rgba(255,255,255,.62);text-align:center;width:90%}
+.screen .sub{position:absolute;left:6px;right:6px;bottom:10px;text-align:center;font-size:12px;font-weight:700;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.9);line-height:1.4}
+.frame figcaption{font-size:13px;color:var(--muted);display:flex;flex-direction:column;gap:3px}
+.frame figcaption b{font-family:var(--mono);font-size:10px;letter-spacing:.06em;color:var(--ink)}
+.frame figcaption em{font-style:normal;color:var(--ink)}
+.brollh{margin:18px 0 8px;font-size:15px}
+.broll{display:flex;flex-wrap:wrap;gap:8px}
+.broll span{border:1px dashed var(--muted);border-radius:999px;padding:4px 12px;font-size:13px}
+.titles{list-style:none;margin:16px 0 0;padding:0;display:grid;gap:10px}
+.titles li{display:grid;grid-template-columns:32px 1fr;gap:12px;align-items:start;border-top:1px solid var(--line);padding-top:10px}
+.titles .mono{color:var(--muted);padding-top:3px}
+.titles b{font-size:16px}
+.titles p{margin:2px 0 0;font-size:14px;color:var(--muted)}
 .script{border:1px solid var(--line);border-radius:6px;margin-bottom:14px;overflow:hidden}
 .script-head{padding:14px 16px;background:var(--soft);display:flex;flex-direction:column;gap:4px}
 .script-head .mono{color:var(--muted);font-size:11px}
@@ -263,6 +285,454 @@ const JVM = {
     ["剪接及發佈","JVM 剪片、加字幕配樂，按排程幫你發佈。"],
     ["每月數據檢討","JVM 睇數據調整方向，下個月拍得更準。"]
   ]
+};
+
+/* ---------- 每個行業嘅實際拍攝資料（示範用） ---------- */
+const SHOOT = {
+ "food": {
+  "loc": [
+   "廚房備料區（朝早自然光）",
+   "出餐窗口／水吧",
+   "門口招牌同街景"
+  ],
+  "props": [
+   "招牌菜 2 份（一份專做特寫）",
+   "原材料擺枱（湯骨、麵、配料）",
+   "制服、頭巾",
+   "舊相或開業第一日紀念物"
+  ],
+  "broll": [
+   "湯滾冒煙特寫",
+   "落鑊火焰",
+   "切料手部特寫",
+   "客人食第一啖嘅反應"
+  ],
+  "titles": [
+   [
+    "凌晨 5 點，我哋喺度做緊咩",
+    "朝早 5 點嘅廚房，冇人見過。"
+   ],
+   [
+    "第一次嚟必叫嘅 3 樣嘢",
+    "唔想踩雷？照住呢 3 樣叫。"
+   ],
+   [
+    "呢碗嘢點解賣呢個價",
+    "話我貴？今日同你計條數。"
+   ],
+   [
+    "食咗我哋 10 年嘅熟客",
+    "佢由拍拖食到湊仔。"
+   ]
+  ]
+ },
+ "beauty": {
+  "loc": [
+   "療程房（打好燈）",
+   "護膚品陳列牆",
+   "接待處／洗手盆位"
+  ],
+  "props": [
+   "客人前後相（已取得同意）",
+   "主打產品 3 支",
+   "儀器同一次性用品",
+   "皮膚檢測報告"
+  ],
+  "broll": [
+   "產品質地特寫",
+   "儀器運作近鏡",
+   "客人放鬆表情",
+   "美容師戴手套備料"
+  ],
+  "titles": [
+   [
+    "3 個你每日都做錯嘅護膚步驟",
+    "你越用力護膚，皮膚可能越差。"
+   ],
+   [
+    "做完療程，第 7 日會點",
+    "即時效果人人有，第 7 日先係真相。"
+   ],
+   [
+    "暗瘡肌 4 星期紀錄",
+    "佢冇轉產品，只係改咗一件事。"
+   ],
+   [
+    "貴精華係咪真係有用",
+    "$1,500 同 $150，差喺邊？"
+   ]
+  ]
+ },
+ "fitness": {
+  "loc": [
+   "訓練區（器械旁）",
+   "鏡面牆（做動作示範）",
+   "接待處／白板"
+  ],
+  "props": [
+   "啞鈴、彈力帶等常用器材",
+   "學員前後相",
+   "訓練表或白板",
+   "水樽、毛巾"
+  ],
+  "broll": [
+   "動作慢鏡特寫",
+   "學員流汗表情",
+   "教練調整姿勢嘅手",
+   "計時器倒數"
+  ],
+  "titles": [
+   [
+    "減唔到肚腩？你可能做錯呢個動作",
+    "每日 100 下 sit-up，肚腩都唔會走。"
+   ],
+   [
+    "學員 3 個月前後",
+    "佢每星期只係練 3 次。"
+   ],
+   [
+    "10 分鐘辦公室伸展",
+    "坐足一日腰痛，就做呢 3 個。"
+   ],
+   [
+    "深蹲膝頭痛？睇下你係咪咁",
+    "唔係你唔得，係姿勢錯咗。"
+   ]
+  ]
+ },
+ "property": {
+  "loc": [
+   "示範單位內（一鏡到底導賞）",
+   "屋苑大堂或會所",
+   "區內街市、港鐵站"
+  ],
+  "props": [
+   "平面圖",
+   "成交數據紙本或平板",
+   "計數機／按揭計算表",
+   "鎖匙同名片"
+  ],
+  "broll": [
+   "窗外景觀搖鏡",
+   "實用面積量度",
+   "屋苑設施",
+   "區內生活畫面"
+  ],
+  "titles": [
+   [
+    "$500 萬喺呢區買到咩",
+    "我帶你入去睇，唔靚嗰啲我照講。"
+   ],
+   [
+    "睇樓一定要 check 嘅 5 樣嘢",
+    "經紀未必主動講你知。"
+   ],
+   [
+    "月入 $4 萬買得起幾錢樓",
+    "唔使估，我幫你計。"
+   ],
+   [
+    "呢種單位我唔會建議買",
+    "賣得平，係有原因。"
+   ]
+  ]
+ },
+ "finance": {
+  "loc": [
+   "辦公室會客區",
+   "白板或大螢幕前",
+   "咖啡店（輕鬆話題）"
+  ],
+  "props": [
+   "白板同筆",
+   "保單樣本（遮走個人資料）",
+   "計數機",
+   "圖表道具"
+  ],
+  "broll": [
+   "寫白板嘅手",
+   "翻保單條款特寫",
+   "打字計數",
+   "客人點頭嘅畫面"
+  ],
+  "titles": [
+   [
+    "買咗保險都賠唔到？3 個常見原因",
+    "交咗 10 年保費，最後一蚊都賠唔到。"
+   ],
+   [
+    "月入 $2 萬，點分配先唔會月光",
+    "唔係你賺得少，係你分配錯。"
+   ],
+   [
+    "年輕唔使買保險？",
+    "我 25 歲嗰陣都係咁諗。"
+   ],
+   [
+    "自願醫保究竟保咩",
+    "三分鐘講完，唔使睇 60 頁。"
+   ]
+  ]
+ },
+ "edu": {
+  "loc": [
+   "課室白板前",
+   "書枱（教材特寫）",
+   "走廊或中心門口"
+  ],
+  "props": [
+   "歷年試卷同筆記",
+   "白板同螢光筆",
+   "學生成績表（遮名）",
+   "計時器"
+  ],
+  "broll": [
+   "寫筆記嘅手",
+   "試卷紅筆批改",
+   "學生專心上堂",
+   "書架同教材"
+  ],
+  "titles": [
+   [
+    "DSE 英文最易失分嘅 3 個位",
+    "每年一半考生都中伏。"
+   ],
+   [
+    "由不合格到 5*，佢改咗一樣嘢",
+    "佢冇多讀一個鐘。"
+   ],
+   [
+    "溫書時間表應該點排",
+    "唔係讀得多，係讀得啱。"
+   ],
+   [
+    "家長最常問：幾時開始補習",
+    "太早同太遲都唔好。"
+   ]
+  ]
+ },
+ "retail": {
+  "loc": [
+   "貨架或陳列枱",
+   "包裝出貨枱",
+   "工作室窗邊（開箱靚光）"
+  ],
+  "props": [
+   "主打產品同對比品",
+   "包裝材料、手寫卡",
+   "出貨紙箱",
+   "量度工具或色卡"
+  ],
+  "broll": [
+   "拆包裝特寫",
+   "產品質感近鏡",
+   "寫手寫卡",
+   "貼單寄出"
+  ],
+  "titles": [
+   [
+    "$200 vs $2000，差喺邊",
+    "貴 10 倍，係咪真係好 10 倍？"
+   ],
+   [
+    "今日寄出第 100 張單",
+    "開舖第 3 個月，我哋等咗好耐。"
+   ],
+   [
+    "呢件貨我試咗一星期先敢賣",
+    "唔好用嘅，我唔會擺上架。"
+   ],
+   [
+    "最多人回購嘅一件",
+    "買過嘅人，十個有七個買第二次。"
+   ]
+  ]
+ },
+ "health": {
+  "loc": [
+   "診症室／治療床",
+   "骨骼模型或海報前",
+   "接待處"
+  ],
+  "props": [
+   "骨骼或肌肉模型",
+   "治療用具（按摩球、彈力帶）",
+   "評估表",
+   "白袍或制服"
+  ],
+  "broll": [
+   "示範動作近鏡",
+   "模型指示位置",
+   "儀器運作",
+   "病人做運動畫面"
+  ],
+  "titles": [
+   [
+    "成日頸痛？可能係呢個坐姿",
+    "你而家睇片嘅姿勢，就係問題。"
+   ],
+   [
+    "3 個伸展，舒緩肩頸",
+    "坐住做，每個 30 秒。"
+   ],
+   [
+    "第一次嚟會做啲咩",
+    "60 分鐘評估，睇嘅唔止痛嗰度。"
+   ],
+   [
+    "手指麻痺，可能唔係手嘅問題",
+    "好多人搞錯咗。"
+   ]
+  ]
+ },
+ "reno": {
+  "loc": [
+   "完工單位（導賞）",
+   "裝修中工地",
+   "辦公室睇圖區"
+  ],
+  "props": [
+   "平面圖同 3D 圖",
+   "材料樣板（地板、五金）",
+   "報價單樣本",
+   "量度工具"
+  ],
+  "broll": [
+   "改造前後同角度對比",
+   "工人施工畫面",
+   "收納設計細節",
+   "材料質感特寫"
+  ],
+  "titles": [
+   [
+    "400 呎點變出三房",
+    "一家四口，住得落。"
+   ],
+   [
+    "裝修報價單最易中伏嘅地方",
+    "平三成？小心呢 3 行字。"
+   ],
+   [
+    "呢個收納位，好多人諗唔到",
+    "同一個單位，多咗成個櫃。"
+   ],
+   [
+    "裝修完最多人後悔嘅 5 件事",
+    "第 3 樣，返唔到轉頭。"
+   ]
+  ]
+ },
+ "wedding": {
+  "loc": [
+   "工作室／作品牆",
+   "實際婚禮或試影場地",
+   "戶外自然光位置"
+  ],
+  "props": [
+   "相機同鏡頭",
+   "實體相簿",
+   "婚紗或花球道具",
+   "籌備時間表"
+  ],
+  "broll": [
+   "按快門一刻",
+   "相片逐張過",
+   "新人互望畫面",
+   "幕後走位"
+  ],
+  "titles": [
+   [
+    "呢張相，我哋等咗 40 分鐘",
+    "值唔值，你睇成品。"
+   ],
+   [
+    "籌備婚禮最後悔嘅 5 件事",
+    "問咗 100 對新人。"
+   ],
+   [
+    "自然笑容點樣引出嚟",
+    "我哋唔會叫你「笑啦」。"
+   ],
+   [
+    "落雨都拍到靚相",
+    "最靚嗰輯，係落大雨嗰次。"
+   ]
+  ]
+ },
+ "pet": {
+  "loc": [
+   "美容枱（透明玻璃房）",
+   "沖涼區",
+   "接待處／等候區"
+  ],
+  "props": [
+   "電剪、梳、風筒",
+   "毛孩零食",
+   "毛巾同蝴蝶結",
+   "護理用品"
+  ],
+  "broll": [
+   "毛孩驚同放鬆嘅表情",
+   "剪毛特寫",
+   "吹毛慢鏡",
+   "主人接返毛孩"
+  ],
+  "titles": [
+   [
+    "狗狗成日舔腳？可能係呢個原因",
+    "唔好以為佢扮可愛。"
+   ],
+   [
+    "沖涼前 vs 沖涼後",
+    "入嚟嗰陣，佢係一舊地拖。"
+   ],
+   [
+    "幾耐剪一次指甲先啱",
+    "太長會影響佢行路。"
+   ],
+   [
+    "今日嚟咗隻好驚嘅貓",
+    "我哋用咗 20 分鐘先摸到佢。"
+   ]
+  ]
+ },
+ "other": {
+  "loc": [
+   "工作間（做嘢實拍）",
+   "會客或陳列位",
+   "門口／招牌"
+  ],
+  "props": [
+   "代表性工具或產品",
+   "客人個案文件（遮名）",
+   "白板",
+   "制服"
+  ],
+  "broll": [
+   "工序特寫",
+   "成品展示",
+   "同事協作畫面",
+   "交付客人一刻"
+  ],
+  "titles": [
+   [
+    "客人最常問嘅 3 條問題",
+    "每日被問 10 次。"
+   ],
+   [
+    "一單生意由頭到尾",
+    "你睇到嘅只係結果。"
+   ],
+   [
+    "行內人先知嘅一件事",
+    "講出嚟可能會得罪人。"
+   ],
+   [
+    "點解我要開呢盤生意",
+    "做落先知冇咁簡單。"
+   ]
+  ]
+ }
 };
 
 /* ---------- 行業資料（亦係冇 AI 時嘅範本） ---------- */
@@ -376,6 +846,7 @@ const S = {step:0, ind:null, q:0, a:{}, plan:null, mode:null, ctl:null, canRetry
 const $app = document.getElementById("app");
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const arr = v => Array.isArray(v) ? v : [];
+const FRAMING = ["中近景 · 固定機位","特寫 · 手持","中景 · 慢推","中近景 · 固定機位","特寫 · 慢動作"];
 function toast(msg){const t=document.getElementById("toast");t.textContent=msg;t.hidden=false;clearTimeout(t._h);t._h=setTimeout(()=>t.hidden=true,2200)}
 function setSteps(){document.querySelectorAll("#steps span").forEach(s=>{const n=+s.dataset.s;s.className=n===S.step?"on":n<S.step?"done":""})}
 function freshAnswers(){return {brand:"",desc:"",indText:"",audience:[],audienceCustom:"",usp:"",face:"",platforms:[],cta:"",freq:""}}
@@ -388,12 +859,21 @@ function renderIndustry(){
     <h1 class="h-xl">答 7 條問題，<br>睇下 JVM 點幫你拍出 <em>品牌 IP</em></h1>
     <p class="lede">揀你所屬嘅行業，AI 會按你嘅答案，即時整理出 JVM 為你度身嘅 IP 方案：人設定位、內容方向、分鏡腳本，同埋由睇片到成交嘅引流留客路徑。策劃、拍攝、剪接全部由 JVM 團隊負責，你只需要出鏡。</p>
     <div class="grid-ind">${INDUSTRIES.map(i=>`
-      <button class="tile" data-id="${i.id}"><b>${esc(i.name)}</b><small>${esc(i.hint)}</small><span class="mono">開始 →</span></button>`).join("")}
+      <div class="tile" data-id="${i.id}"><b>${esc(i.name)}</b><small>${esc(i.hint)}</small>
+        <div class="tileacts"><button class="go" data-id="${i.id}">開始 →</button><button class="demo" data-id="${i.id}">睇示範</button></div></div>`).join("")}
     </div></div>`;
-  $app.querySelectorAll(".tile").forEach(b=>b.onclick=()=>{
+  $app.querySelectorAll(".go").forEach(b=>b.onclick=()=>{
     const ind = INDUSTRIES.find(i=>i.id===b.dataset.id);
     if(S.ind?.id!==ind.id) S.a=freshAnswers();
     S.ind=ind; S.q=0; renderQuestion();
+  });
+  $app.querySelectorAll(".demo").forEach(b=>b.onclick=()=>{
+    const ind = INDUSTRIES.find(i=>i.id===b.dataset.id);
+    S.ind=ind; S.a=freshAnswers();
+    Object.assign(S.a,{brand:ind.demo.brand||ind.name,desc:ind.demo.desc,usp:ind.demo.usp,
+      audience:["上班族"],face:"老闆本人",platforms:["Instagram Reels","小紅書"],cta:"WhatsApp 查詢",freq:"8 條（標準）"});
+    S.canRetry=true;
+    showPlan(buildFallback(),"demo",`呢個係「${ind.name}」嘅示範方案，睇下實際拍出嚟係點。想要自己嗰份，撳「修改答案」答 7 條問題。`);
   });
 }
 
@@ -502,7 +982,7 @@ async function generate(){
   document.getElementById("stop").onclick=()=>S.ctl.abort();
   let text="";
   try{
-    const res = await fetch("/api/generate", {
+    const res = await fetch("api/generate", {
       method:"POST", headers:{"Content-Type":"application/json"}, signal:S.ctl.signal,
       body: JSON.stringify({...answerSummary()})
     });
@@ -521,15 +1001,15 @@ async function generate(){
   }catch(e){
     stopLoading();
     if(e?.name==="AbortError"){ S.q=QUESTIONS.length-1; renderQuestion(); toast("已停止生成"); return }
-    const why = e?.code==="not_configured" ? "AI 未設定（伺服器未有 API Key），" : "AI 暫時未能回應，";
-    S.canRetry = e?.code!=="not_configured";
+    const why = (e?.code==="not_configured"||e?.code==="http_404"||e?.code==="http_405") ? "呢個係示範版（未接 AI），" : "AI 暫時未能回應，";
+    S.canRetry = !["not_configured","http_404","http_405"].includes(e?.code);
     showPlan(buildFallback(),"fallback", why+"以下係按行業範本整理嘅方案。");
   }
 }
 
 /* ---------- 範本方案（冇 AI 時） ---------- */
 function buildFallback(){
-  const ind=S.ind, s=answerSummary(), brand=s.brand;
+  const ind=S.ind, s=answerSummary(), brand=s.brand, sh=SHOOT[ind.id]||SHOOT.other;
   const faceStyle = {
     "老闆本人":"老闆對鏡頭講嘢 + JVM 補拍 B-roll 穿插，真實親切",
     "員工／團隊":"員工輪流出鏡，建立「成間舖都係自己人」嘅親切感",
@@ -561,7 +1041,9 @@ function buildFallback(){
       client_does: ["每月預留半日拍攝日","出鏡講你最熟悉嘅專業","提供場地、產品或客人個案（如有）"].concat(ind.extraTip?["JVM 會把關合規字眼，你只需確認內容"]:[]),
       shoot_day: `每月 1 次拍攝日，半日內喺你嘅${s.industry==="零售・網店"?"貨倉或工作室":"舖頭或工作地點"}一次過拍晒 ${n} 條片。`
     },
-    scripts: ind.scripts.map(sc=>({title:sc.title,hook:sc.hook,shots:sc.shots.map(([time,visual,voice])=>({time,visual,voice})),cta:`引導客人「${s.cta}」`})),
+    scripts: ind.scripts.map(sc=>({title:sc.title,hook:sc.hook,shots:sc.shots.map(([time,visual,voice],i)=>({time,visual,voice,framing:FRAMING[i%FRAMING.length]})),cta:`引導客人「${s.cta}」`})),
+    shoot_list: {locations:sh.loc, props:sh.props, broll:sh.broll},
+    title_bank: sh.titles.map(([title,hook])=>({title,hook})),
     funnel: [
       {stage:"吸引",action:`喺 ${s.platforms} 出片，頭 3 秒直接講「${ind.pains[0]}」呢類痛點，用系列式標題。`},
       {stage:"建立信任",action:"專頁置頂 3 條片：你係邊個、真實成果或個案、價錢／流程點樣。"},
@@ -646,18 +1128,41 @@ function showPlan(plan, mode, note){
 
         <section class="sec">
           <span class="eyebrow mono">分鏡腳本</span>
-          <h3>JVM 編劇示範腳本</h3>
-          <p class="sub">拍攝日 JVM 導演會照住分鏡帶你拍，你只需要講對白。</p>
+          <h3>條片實際拍成點</h3>
+          <p class="sub">下面每格就係手機畫面：幾時、乜景別、畫面影乜、你講咩。拍攝日 JVM 導演會照住呢個分鏡帶你拍。</p>
           ${arr(p.scripts).map((sc,i)=>`
             <article class="script">
               <div class="script-head"><span class="mono">Script ${String.fromCharCode(65+i)}</span><b>${esc(sc.title)}</b>
                 <div class="hook"><span>HOOK</span>${esc(sc.hook)}</div></div>
-              <div class="tablewrap"><table><thead><tr><th>時間</th><th>畫面</th><th>對白／字幕</th></tr></thead><tbody>
-                ${arr(sc.shots).map(sh=>`<tr><td class="tc">${esc(sh.time)}</td><td>${esc(sh.visual)}</td><td>${esc(sh.voice)}</td></tr>`).join("")}
-              </tbody></table></div>
+              <div class="board">${arr(sc.shots).map((sh,n)=>`
+                <figure class="frame">
+                  <div class="screen"><span class="tc">${esc(sh.time)}</span><span class="cam">${esc(sh.framing||FRAMING[n%FRAMING.length])}</span>
+                    <span class="sub">${esc((sh.voice||"").replace(/^「|」$/g,"").slice(0,22))}</span></div>
+                  <figcaption><b>鏡頭 ${n+1}</b>${esc(sh.visual)}<em>${esc(sh.voice)}</em></figcaption>
+                </figure>`).join("")}
+              </div>
               ${sc.cta?`<div class="cta-line"><b>CTA</b>${esc(sc.cta)}</div>`:""}
             </article>`).join("")}
         </section>
+
+        ${p.shoot_list?`<section class="sec">
+          <span class="eyebrow mono">拍攝日清單</span>
+          <h3>拍攝日要準備咩</h3>
+          <p class="sub">JVM 拍攝前會再同你確認一次，你照住準備就得。</p>
+          <div class="twocol" style="margin-top:16px">
+            <div class="side"><h4>拍攝地點</h4><ul>${arr(p.shoot_list.locations).map(x=>`<li>${esc(x)}</li>`).join("")}</ul></div>
+            <div class="side"><h4>你要準備嘅道具</h4><ul>${arr(p.shoot_list.props).map(x=>`<li>${esc(x)}</li>`).join("")}</ul></div>
+          </div>
+          <h4 class="brollh">JVM 會補拍嘅畫面（B-roll）</h4>
+          <div class="broll">${arr(p.shoot_list.broll).map(x=>`<span>${esc(x)}</span>`).join("")}</div>
+        </section>`:""}
+
+        ${arr(p.title_bank).length?`<section class="sec">
+          <span class="eyebrow mono">片題庫</span>
+          <h3>可以即刻開拍嘅片題</h3>
+          <p class="sub">每條都配好開場白（hook），頭 3 秒就係咁講。</p>
+          <ol class="titles">${arr(p.title_bank).map((t,i)=>`<li><span class="mono">${String(i+1).padStart(2,"0")}</span><div><b>${esc(t.title)}</b><p>${esc(t.hook)}</p></div></li>`).join("")}</ol>
+        </section>`:""}
 
         <section class="sec">
           <span class="eyebrow mono">引流留客</span>
@@ -704,7 +1209,9 @@ function planText(){
   L.push(`【JVM × ${s.brand}｜IP 拍攝方案】（${s.industry}）`,`人設：${p.ip_name}`,`口號：${p.tagline}`,`定位：${p.positioning}`,`性格：${arr(p.traits).join("、")}`,`客人痛點：${arr(p.audience_pains).join("／")}`,"");
   L.push("■ 內容支柱"); arr(p.pillars).forEach(x=>L.push(`- ${x.name}（${x.ratio}%）：${x.desc}｜例：${arr(x.examples).join("、")}`)); L.push("");
   const f=p.production||{}; L.push("■ JVM 製作安排",`格式：${f.format}`,`片長：${f.length}`,`風格：${f.style}`,"JVM 負責：",...arr(f.jvm_does).map(t=>`- ${t}`),"你只需要：",...arr(f.client_does).map(t=>`- ${t}`),`拍攝日：${f.shoot_day||""}`,"");
-  arr(p.scripts).forEach((sc,i)=>{L.push(`■ 腳本 ${String.fromCharCode(65+i)}：${sc.title}`,`Hook：${sc.hook}`); arr(sc.shots).forEach(sh=>L.push(`  ${sh.time}｜${sh.visual}｜${sh.voice}`)); if(sc.cta) L.push(`  CTA：${sc.cta}`); L.push("")});
+  arr(p.scripts).forEach((sc,i)=>{L.push(`■ 腳本 ${String.fromCharCode(65+i)}：${sc.title}`,`Hook：${sc.hook}`); arr(sc.shots).forEach((sh,n)=>L.push(`  鏡頭${n+1}｜${sh.time}｜${sh.framing||""}｜${sh.visual}｜${sh.voice}`)); if(sc.cta) L.push(`  CTA：${sc.cta}`); L.push("")});
+  if(p.shoot_list){L.push("■ 拍攝日清單",`地點：${arr(p.shoot_list.locations).join("、")}`,`道具：${arr(p.shoot_list.props).join("、")}`,`B-roll：${arr(p.shoot_list.broll).join("、")}`,"")}
+  if(arr(p.title_bank).length){L.push("■ 片題庫"); arr(p.title_bank).forEach((t,i)=>L.push(`${i+1}. ${t.title}｜Hook：${t.hook}`)); L.push("")}
   L.push("■ 引流留客路徑"); arr(p.funnel).forEach((x,i)=>L.push(`${i+1}. ${x.stage}：${x.action}`));
   if(p.lead_magnet) L.push(`留客誘因：${p.lead_magnet.name}——${p.lead_magnet.desc}`); L.push("");
   L.push("■ 第一個月發佈排程"); arr(p.schedule).forEach(d=>L.push(`${d.day}｜${d.pillar}｜${d.idea}`));
@@ -737,7 +1244,7 @@ if(JVM.logo){ const l=document.getElementById("logo"); const img=new Image(); im
     if(deferred){ deferred.prompt(); const r=await deferred.userChoice; deferred=null; if(r.outcome==="accepted") btn.hidden=true; }
     else toast("喺 Safari 撳底部「分享」→「加至主畫面」");
   };
-  if("serviceWorker" in navigator && location.protocol!=="file:") navigator.serviceWorker.register("/sw.js").catch(()=>{});
+  if("serviceWorker" in navigator && location.protocol!=="file:") navigator.serviceWorker.register("sw.js").catch(()=>{});
 })();
 
 S.a=freshAnswers();
